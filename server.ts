@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
@@ -30,9 +29,14 @@ function resolveUpstreamBase(req: Request): string {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '1mb' }));
+
+  // Lightweight healthcheck endpoint for container readiness probes
+  app.get('/api/healthz', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok' });
+  });
 
   // Proxy gateway to the deployed FastAPI backend on Render (https://demandaura.onrender.com)
   app.use('/api/ml', async (req: Request, res: Response) => {
@@ -83,6 +87,7 @@ async function startServer() {
   });
 
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
