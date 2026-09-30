@@ -1,0 +1,6 @@
+{
+  "name": "NexusDemand — Market Foresight & Demand Intelligence",
+  "description": "Enterprise ML Demand Planning, Market Divergence Prediction, Multi-Week Search Interest Forecasting, and Strategic Market Segmentation Platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

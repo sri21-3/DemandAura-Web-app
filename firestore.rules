@@ -1,0 +1,281 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidCountry(country) {
+      return country is string && country.size() <= 64 && country in [
+        'Australia',
+        'Brazil',
+        'Canada',
+        'China',
+        'France',
+        'India',
+        'Kenya',
+        'Mexico',
+        'Nigeria',
+        'Singapore',
+        'South_Africa',
+        'United_Arab_Emirates',
+        'United_Kingdom',
+        'United_States'
+      ];
+    }
+
+    function isValidCategory(category) {
+      return category is string && category.size() <= 64 && category in [
+        'Fashion_Beauty',
+        'Fitness_Wearables',
+        'Nutrition_Diets'
+      ];
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid',
+          'displayName',
+          'organization',
+          'jobTitle',
+          'preferredCountry',
+          'preferredCategory',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'organization',
+          'jobTitle',
+          'preferredCountry',
+          'preferredCategory',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && data.organization is string && data.organization.size() >= 0 && data.organization.size() <= 120
+        && data.jobTitle is string && data.jobTitle.size() >= 0 && data.jobTitle.size() <= 100
+        && isValidCountry(data.preferredCountry)
+        && isValidCategory(data.preferredCategory)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPredictionRecord(data) {
+      return data.keys().hasAll([
+          'uid',
+          'modelType',
+          'modelDisplayName',
+          'countryName',
+          'category',
+          'summaryValue',
+          'numericResult',
+          'recordDate',
+          'predictionStatus',
+          'notes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'modelType',
+          'modelDisplayName',
+          'countryName',
+          'category',
+          'summaryValue',
+          'numericResult',
+          'recordDate',
+          'predictionStatus',
+          'notes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == request.auth.uid
+        && data.modelType is string && data.modelType.size() <= 40
+        && data.modelType in ['divergence', 'forecast', 'segmentation_overall', 'segmentation_4w']
+        && data.modelDisplayName is string && data.modelDisplayName.size() >= 1 && data.modelDisplayName.size() <= 120
+        && data.countryName is string && data.countryName.size() >= 1 && data.countryName.size() <= 64
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 64
+        && data.summaryValue is string && data.summaryValue.size() >= 1 && data.summaryValue.size() <= 200
+        && (data.numericResult is int || data.numericResult is float)
+        && data.recordDate is string && data.recordDate.size() >= 1 && data.recordDate.size() <= 100
+        && data.predictionStatus is string && data.predictionStatus.size() <= 32
+        && data.predictionStatus in ['success', 'error']
+        && data.notes is string && data.notes.size() >= 0 && data.notes.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidContactInquiry(data) {
+      return data.keys().hasAll([
+          'uid',
+          'senderName',
+          'organization',
+          'topic',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'senderName',
+          'organization',
+          'topic',
+          'message',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == request.auth.uid
+        && data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 100
+        && data.organization is string && data.organization.size() >= 1 && data.organization.size() <= 120
+        && data.topic is string && data.topic.size() <= 64
+        && data.topic in ['API Integration', 'Custom Market Coverage', 'Model Calibration', 'Enterprise Licensing']
+        && data.message is string && data.message.size() >= 5 && data.message.size() <= 2000
+        && data.status is string && data.status.size() <= 32
+        && data.status in ['submitted', 'resolved']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Match Blocks
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'organization',
+            'jobTitle',
+            'preferredCountry',
+            'preferredCategory',
+            'updatedAt'
+          ])
+        );
+      allow delete: if false;
+
+      // User Prediction / Query History Subcollection
+      match /predictions/{predictionId} {
+        allow get: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(predictionId)
+          && existing().uid == request.auth.uid
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow list: if isOwner(userId)
+          && existing().uid == request.auth.uid;
+        allow create: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(predictionId)
+          && isValidPredictionRecord(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && (
+            exists(/databases/$(database)/documents/users/$(userId))
+            || existsAfter(/databases/$(database)/documents/users/$(userId))
+          );
+        allow update: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(predictionId)
+          && isValidPredictionRecord(incoming())
+          && incoming().uid == existing().uid
+          && incoming().modelType == existing().modelType
+          && incoming().modelDisplayName == existing().modelDisplayName
+          && incoming().countryName == existing().countryName
+          && incoming().category == existing().category
+          && incoming().summaryValue == existing().summaryValue
+          && incoming().numericResult == existing().numericResult
+          && incoming().recordDate == existing().recordDate
+          && incoming().predictionStatus == existing().predictionStatus
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'updatedAt'])
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow delete: if isVerifiedUser()
+          && isOwner(userId)
+          && isValidId(userId)
+          && isValidId(predictionId)
+          && existing().uid == request.auth.uid
+          && exists(/databases/$(database)/documents/users/$(userId));
+      }
+    }
+
+    // Contact Us Inquiries Collection
+    match /contactInquiries/{inquiryId} {
+      allow get: if isSignedIn()
+        && isValidId(inquiryId)
+        && existing().uid == request.auth.uid;
+      allow list: if isSignedIn()
+        && existing().uid == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isValidContactInquiry(incoming())
+        && incoming().status == 'submitted'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isValidContactInquiry(incoming())
+        && existing().uid == request.auth.uid
+        && existing().status != 'resolved'
+        && incoming().uid == existing().uid
+        && incoming().senderName == existing().senderName
+        && incoming().organization == existing().organization
+        && incoming().topic == existing().topic
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['message', 'status', 'updatedAt'])
+        );
+      allow delete: if false;
+    }
+  }
+}

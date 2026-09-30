@@ -1,0 +1,274 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Application-level user profile and default market preferences keyed by Firebase Auth UID. Does not duplicate authentication credentials or passwords.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the analyst.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "organization": {
+          "type": "string",
+          "description": "Organization, brand, or agency name.",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "jobTitle": {
+          "type": "string",
+          "description": "Role or title of the user.",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "preferredCountry": {
+          "type": "string",
+          "description": "Default country filter for ML models.",
+          "enum": [
+            "Australia",
+            "Brazil",
+            "Canada",
+            "China",
+            "France",
+            "India",
+            "Kenya",
+            "Mexico",
+            "Nigeria",
+            "Singapore",
+            "South_Africa",
+            "United_Arab_Emirates",
+            "United_Kingdom",
+            "United_States"
+          ],
+          "maxLength": 64
+        },
+        "preferredCategory": {
+          "type": "string",
+          "description": "Default category filter for ML models.",
+          "enum": [
+            "Fashion_Beauty",
+            "Fitness_Wearables",
+            "Nutrition_Diets"
+          ],
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "organization",
+        "jobTitle",
+        "preferredCountry",
+        "preferredCategory",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PredictionRecord": {
+      "title": "PredictionRecord",
+      "description": "User-specific ML model prediction or segmentation query record associating UID, model identifier, model display name, submitted inputs, model outputs, prediction status, and server timestamps.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Authenticated Firebase UID of the user who executed the model query.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "modelType": {
+          "type": "string",
+          "description": "Canonical model identifier.",
+          "enum": [
+            "divergence",
+            "forecast",
+            "segmentation_overall",
+            "segmentation_4w"
+          ],
+          "maxLength": 40
+        },
+        "modelDisplayName": {
+          "type": "string",
+          "description": "Human-readable display name of the ML model.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "countryName": {
+          "type": "string",
+          "description": "Submitted input: canonical target country_name.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "category": {
+          "type": "string",
+          "description": "Submitted input: canonical consumer category.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "summaryValue": {
+          "type": "string",
+          "description": "Model output summary string (divergence score verdict, 4-week forecast trajectory summary, or cluster match summary).",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "numericResult": {
+          "type": "number",
+          "description": "Primary numeric model output (predicted divergence score, 4-week mean forecast, or matched record count)."
+        },
+        "recordDate": {
+          "type": "string",
+          "description": "Model output reference date or forecast horizon window.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "predictionStatus": {
+          "type": "string",
+          "description": "Execution status of the prediction or query.",
+          "enum": [
+            "success",
+            "error"
+          ],
+          "maxLength": 32
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional analyst annotation on this prediction run.",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the prediction record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the prediction record was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "modelType",
+        "modelDisplayName",
+        "countryName",
+        "category",
+        "summaryValue",
+        "numericResult",
+        "recordDate",
+        "predictionStatus",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ContactInquiry": {
+      "title": "ContactInquiry",
+      "description": "Enterprise contact or support inquiry submitted by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "UID of the authenticated user submitting the inquiry.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderName": {
+          "type": "string",
+          "description": "Name of the person submitting the inquiry.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "organization": {
+          "type": "string",
+          "description": "Company or team name.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "topic": {
+          "type": "string",
+          "description": "Inquiry category.",
+          "enum": [
+            "API Integration",
+            "Custom Market Coverage",
+            "Model Calibration",
+            "Enterprise Licensing"
+          ],
+          "maxLength": 64
+        },
+        "message": {
+          "type": "string",
+          "description": "Detailed message body.",
+          "minLength": 5,
+          "maxLength": 2000
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the inquiry.",
+          "enum": [
+            "submitted",
+            "resolved"
+          ],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the inquiry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the inquiry was updated."
+        }
+      },
+      "required": [
+        "uid",
+        "senderName",
+        "organization",
+        "topic",
+        "message",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Application-level user profile preferences keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/predictions/{predictionId}": {
+      "schema": {
+        "$ref": "#/entities/PredictionRecord"
+      },
+      "description": "User-specific subcollection storing historical ML model predictions and segmentation queries."
+    },
+    "/contactInquiries/{inquiryId}": {
+      "schema": {
+        "$ref": "#/entities/ContactInquiry"
+      },
+      "description": "Collection storing Contact Us submissions owned by the submitting user."
+    }
+  }
+}
