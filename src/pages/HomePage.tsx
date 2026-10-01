@@ -195,7 +195,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 <div className="p-6 space-y-4">
                   <div className="space-y-1.5">
                     <div className="text-xs text-slate-500">
-                      14 Countries · 5 Consumer Topic Clusters (21 Keywords)
+                      14 Countries · 5 Consumer Topic Themes (21 Keywords)
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900">
                       {cat.label}
@@ -460,101 +460,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             >
               Explore 4-Week Momentum Segments
             </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Practical Guide: Understanding the Divergence Score Range (-1.00 to +1.00) */}
-      <section className="max-w-[1400px] mx-auto px-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-8 space-y-6">
-          <div className="max-w-3xl space-y-2">
-            <div className="text-xs text-slate-500">
-              Decision Guide · Reading the Demand vs. Hype Scale
-            </div>
-            <h3 className="text-xl font-semibold text-slate-900">
-              How to Read the Divergence Score (-1.00 to +1.00)
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              The Divergence Score gives your team a single, intuitive benchmark
-              on a <strong>-1.00 to +1.00</strong> scale to decide how to
-              approach any country and category:
-            </p>
-          </div>
-
-          {/* Visual Spectrum Bar */}
-          <div className="space-y-2 pt-1">
-            <div className="flex flex-wrap justify-between text-xs text-slate-500 font-mono-tabular gap-2">
-              <span className="text-amber-800 font-semibold">
-                -1.00 (Media Hype &amp; Saturation)
-              </span>
-              <span className="text-slate-700 font-semibold">
-                0.00 (Balanced Demand &amp; Media)
-              </span>
-              <span className="text-emerald-800 font-semibold">
-                +1.00 (Strong Underserved Consumer Demand)
-              </span>
-            </div>
-            <div className="h-3 w-full rounded-full overflow-hidden flex border border-slate-200">
-              <div
-                className="bg-amber-500/80 h-full"
-                style={{ width: '42%' }}
-                title="Over-Hyped Market Zone (-1.00 to -0.05)"
-              />
-              <div
-                className="bg-slate-400 h-full"
-                style={{ width: '16%' }}
-                title="Balanced Zone (-0.05 to +0.20)"
-              />
-              <div
-                className="bg-emerald-600 h-full"
-                style={{ width: '42%' }}
-                title="Underserved Demand Zone (+0.20 to +1.00)"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-            <div className="p-5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-2">
-              <div className="text-xs font-mono-tabular font-semibold text-amber-900">
-                -1.00 to -0.05
-              </div>
-              <div className="text-sm font-semibold text-slate-900">
-                Media-Saturated / Over-Hyped Market
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Press coverage and industry chatter are outpacing actual shopper
-                search interest. Avoid expensive top-of-funnel awareness ads,
-                keep inventory lean, and focus on converting existing buyers.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="text-xs font-mono-tabular font-semibold text-slate-700">
-                -0.05 to +0.20
-              </div>
-              <div className="text-sm font-semibold text-slate-900">
-                Balanced Demand &amp; Media Growth
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Consumer search appetite and media visibility are moving in
-                step. Maintain steady warehouse replenishment and a balanced mix
-                of brand storytelling and performance marketing.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-              <div className="text-xs font-mono-tabular font-semibold text-emerald-900">
-                +0.20 to +1.00
-              </div>
-              <div className="text-sm font-semibold text-slate-900">
-                Underserved Consumer Demand
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Shoppers are actively searching for products, but media and
-                competitor coverage have not caught up. Prioritize this market
-                for product launches, search marketing, and expanded stock.
-              </p>
-            </div>
           </div>
         </div>
       </section>

@@ -47,7 +47,17 @@ function stripBoldAndQuotes(text: string): string {
   cleaned = cleaned.replace(/^["“]|["”]$/g, '').trim();
   // Remove remaining inline bold markers if any
   cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1');
-  return cleaned.trim();
+  return replaceClusterTerminology(cleaned.trim());
+}
+
+function replaceClusterTerminology(text: string): string {
+  return text
+    .replace(/\bClustering\b/g, 'Segmentation')
+    .replace(/\bclustering\b/g, 'segmentation')
+    .replace(/\bClusters\b/g, 'Market Segments')
+    .replace(/\bclusters\b/g, 'market segments')
+    .replace(/\bCluster\b/g, 'Market Segment')
+    .replace(/\bcluster\b/g, 'market segment');
 }
 
 /**
@@ -276,8 +286,10 @@ export function parseSegmentationReport(
   }
 
   return {
-    reportTitle: report.report_title || markdownHeader,
-    markdownHeader,
+    reportTitle: replaceClusterTerminology(
+      report.report_title || markdownHeader
+    ),
+    markdownHeader: replaceClusterTerminology(markdownHeader),
     summaryRows,
     clusters,
     clusterMap,

@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { DashboardSidebar } from './components/DashboardSidebar';
 import { Footer } from './components/Footer';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -24,6 +25,14 @@ import {
   MarkdownReportResponse,
   SegmentationRecord,
 } from './types/models';
+
+const WORKSPACE_PAGES = new Set<AppPage>([
+  'dashboard',
+  'divergence',
+  'forecast',
+  'segmentation',
+  'history',
+]);
 
 function AppShell() {
   const [currentPage, setCurrentPage] = useState<AppPage>('home');
@@ -93,7 +102,7 @@ function AppShell() {
       setReportsError(
         err instanceof Error
           ? err.message
-          : 'Failed loading weekly cluster reports from backend.'
+          : 'Failed loading weekly market segment reports from backend.'
       );
     } finally {
       setReportsLoading(false);
@@ -111,6 +120,8 @@ function AppShell() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isWorkspaceRoute = WORKSPACE_PAGES.has(currentPage);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900">
       <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
@@ -124,85 +135,72 @@ function AppShell() {
           />
         )}
 
-        {currentPage === 'dashboard' && (
+        {isWorkspaceRoute && (
           <ProtectedRoute
-            pageName="User Dashboard"
-            targetPage="dashboard"
+            pageName="DemandAura Intelligence Workspace"
+            targetPage={currentPage}
             onNavigate={handleNavigate}
           >
-            <DashboardPage
-              onNavigate={handleNavigate}
-              health={health}
-              healthLoading={healthLoading}
-              healthError={healthError}
-              onRefreshHealth={() => {
-                checkBackendHealth();
-                loadClusterTables();
-                loadClusterReports();
-              }}
-              overallClusters={overallClusters}
-              fourWeekClusters={fourWeekClusters}
-              clustersLoading={clustersLoading}
-              overallReport={overallReport}
-              fourWeekReport={fourWeekReport}
-              reportsLoading={reportsLoading}
-            />
-          </ProtectedRoute>
-        )}
+            <div className="max-w-[1440px] mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
+              <DashboardSidebar
+                currentPage={currentPage}
+                onNavigate={handleNavigate}
+              />
+              <div className="flex-1 min-w-0">
+                {currentPage === 'dashboard' && (
+                  <DashboardPage
+                    onNavigate={handleNavigate}
+                    health={health}
+                    healthLoading={healthLoading}
+                    healthError={healthError}
+                    onRefreshHealth={() => {
+                      checkBackendHealth();
+                      loadClusterTables();
+                      loadClusterReports();
+                    }}
+                    overallClusters={overallClusters}
+                    fourWeekClusters={fourWeekClusters}
+                    clustersLoading={clustersLoading}
+                    overallReport={overallReport}
+                    fourWeekReport={fourWeekReport}
+                    reportsLoading={reportsLoading}
+                  />
+                )}
 
-        {currentPage === 'divergence' && (
-          <ProtectedRoute
-            pageName="Divergence Score Predictor"
-            targetPage="divergence"
-            onNavigate={handleNavigate}
-          >
-            <DivergencePage
-              overallClusters={overallClusters}
-              fourWeekClusters={fourWeekClusters}
-              overallReport={overallReport}
-              fourWeekReport={fourWeekReport}
-            />
-          </ProtectedRoute>
-        )}
+                {currentPage === 'divergence' && (
+                  <DivergencePage
+                    overallClusters={overallClusters}
+                    fourWeekClusters={fourWeekClusters}
+                    overallReport={overallReport}
+                    fourWeekReport={fourWeekReport}
+                  />
+                )}
 
-        {currentPage === 'forecast' && (
-          <ProtectedRoute
-            pageName="Search Interest Forecaster"
-            targetPage="forecast"
-            onNavigate={handleNavigate}
-          >
-            <ForecastPage />
-          </ProtectedRoute>
-        )}
+                {currentPage === 'forecast' && <ForecastPage />}
 
-        {currentPage === 'segmentation' && (
-          <ProtectedRoute
-            pageName="Market Segmentation Explorer"
-            targetPage="segmentation"
-            onNavigate={handleNavigate}
-          >
-            <SegmentationPage
-              overallClusters={overallClusters}
-              fourWeekClusters={fourWeekClusters}
-              clustersLoading={clustersLoading}
-              overallReport={overallReport}
-              fourWeekReport={fourWeekReport}
-              reportsLoading={reportsLoading}
-              reportsError={reportsError}
-              onRefreshAll={async () => {
-                await Promise.all([loadClusterTables(), loadClusterReports()]);
-              }}
-            />
-          </ProtectedRoute>
-        )}
+                {currentPage === 'segmentation' && (
+                  <SegmentationPage
+                    overallClusters={overallClusters}
+                    fourWeekClusters={fourWeekClusters}
+                    clustersLoading={clustersLoading}
+                    overallReport={overallReport}
+                    fourWeekReport={fourWeekReport}
+                    reportsLoading={reportsLoading}
+                    reportsError={reportsError}
+                    onRefreshAll={async () => {
+                      await Promise.all([
+                        loadClusterTables(),
+                        loadClusterReports(),
+                      ]);
+                    }}
+                  />
+                )}
 
-        {currentPage === 'history' && (
-          <ProtectedRoute
-            pageName="Prediction & Query History"
-            targetPage="history"
-            onNavigate={handleNavigate}
-          >
-            <HistoryPage onNavigate={handleNavigate} />
+                {currentPage === 'history' && (
+                  <HistoryPage onNavigate={handleNavigate} />
+                )}
+              </div>
+            </div>
           </ProtectedRoute>
         )}
 

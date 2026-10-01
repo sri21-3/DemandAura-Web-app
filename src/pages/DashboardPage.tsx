@@ -1,4 +1,13 @@
 import React, { useMemo, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { ArrowRight, RefreshCw } from 'lucide-react';
 import { formatEntityLabel } from '../config/api';
 import { useAuth } from '../context/AuthContext';
@@ -54,19 +63,103 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     reportHorizon === 'overall' ? parsedOverallReport : parsed4WReport;
 
   // Identify top momentum markets from 4-week segmentation
-  const topMomentum4W = [...fourWeekClusters]
-    .sort(
-      (a, b) => b.search_interest_trend_slope - a.search_interest_trend_slope
-    )
-    .slice(0, 6);
+  const topMomentum4W = useMemo(
+    () =>
+      [...fourWeekClusters]
+        .sort(
+          (a, b) =>
+            b.search_interest_trend_slope - a.search_interest_trend_slope
+        )
+        .slice(0, 6),
+    [fourWeekClusters]
+  );
 
   // Identify highest demand-to-media markets from 3+ year segmentation
-  const topUntappedOverall = [...overallClusters]
-    .sort((a, b) => b.mean_demand_to_hype_ratio - a.mean_demand_to_hype_ratio)
-    .slice(0, 6);
+  const topUntappedOverall = useMemo(
+    () =>
+      [...overallClusters]
+        .sort(
+          (a, b) => b.mean_demand_to_hype_ratio - a.mean_demand_to_hype_ratio
+        )
+        .slice(0, 6),
+    [overallClusters]
+  );
+
+  // Prepare visual chart data for Top 4-Week Rising Markets
+  const risingMarketsChartData = useMemo(
+    () =>
+      topMomentum4W.map((r) => ({
+        marketLabel: `${formatEntityLabel(r.country_name)} · ${
+          formatEntityLabel(r.category).split(' ')[0]
+        }`,
+        fullMarket: `${formatEntityLabel(r.country_name)} · ${formatEntityLabel(
+          r.category
+        )}`,
+        segmentName: r.Cluster_Name || 'Market Segment',
+        growthSlope: Number(r.search_interest_trend_slope.toFixed(2)),
+        searchInterest: Number(r.mean_search_interest.toFixed(1)),
+      })),
+    [topMomentum4W]
+  );
+
+  // Prepare visual chart data for Market Segment Distribution (by Segment Name)
+  const segmentDistributionChartData = useMemo(() => {
+    const sourceRows =
+      reportHorizon === 'overall' ? overallClusters : fourWeekClusters;
+    const map = new Map<
+      string,
+      { segmentName: string; marketCount: number; avgSearch: number }
+    >();
+
+    for (const row of sourceRows) {
+      const segId = row.Cluster_Label ?? -1;
+      const segName =
+        activeDashboardReport?.clusterMap[segId]?.clusterName ||
+        row.Cluster_Name ||
+        'Unassigned';
+      const existing = map.get(segName);
+      if (!existing) {
+        map.set(segName, {
+          segmentName: segName,
+          marketCount: 1,
+          avgSearch: row.mean_search_interest,
+        });
+      } else {
+        const nextCount = existing.marketCount + 1;
+        existing.avgSearch =
+          (existing.avgSearch * existing.marketCount +
+            row.mean_search_interest) /
+          nextCount;
+        existing.marketCount = nextCount;
+      }
+    }
+
+    if (map.size === 0 && activeDashboardReport) {
+      for (const seg of activeDashboardReport.clusters) {
+        map.set(seg.clusterName, {
+          segmentName: seg.clusterName,
+          marketCount: seg.marketCount,
+          avgSearch: 0,
+        });
+      }
+    }
+
+    return Array.from(map.values()).map((item) => ({
+      ...item,
+      avgSearch: Number(item.avgSearch.toFixed(1)),
+    }));
+  }, [
+    reportHorizon,
+    overallClusters,
+    fourWeekClusters,
+    activeDashboardReport,
+  ]);
+
+  const topFastestMarket = topMomentum4W[0];
+  const topUnderservedMarket = topUntappedOverall[0];
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-10">
+    <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
       {/* Header Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div className="space-y-1">
@@ -106,8 +199,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* Service & Market Coverage Overview */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Service & Market Coverage Status Banner */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-slate-900">
             Global Demand &amp; Media Intelligence Coverage
@@ -137,82 +230,249 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* Quick-Launch Foresight Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between space-y-4">
-          <div className="space-y-2">
-            <div className="text-xs text-slate-500">
-              Opportunity &amp; Saturation Detector
-            </div>
-            <h3 className="text-base font-semibold text-slate-900">
-              Demand vs. Hype Divergence Score
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Evaluate any country and category on a -1.00 to +1.00 scale to
-              see whether shopper demand is underserved or media-saturated.
-            </p>
+      {/* Executive KPI Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+          <div className="text-xs text-slate-500">Global Markets Tracked</div>
+          <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+            42 Markets
           </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('divergence')}
-            className="text-xs font-semibold text-slate-900 hover:text-slate-700 inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>Check Demand vs. Hype Score</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="text-xs text-slate-500">
+            14 Countries × 3 Lifestyle Categories
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between space-y-4">
-          <div className="space-y-2">
-            <div className="text-xs text-slate-500">
-              4-Week Forward Demand Outlook
-            </div>
-            <h3 className="text-base font-semibold text-slate-900">
-              4-Week Search Interest Forecast
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Project weekly consumer search interest (0–100 index) across the
-              upcoming 4 weeks for 14 countries and 3 categories to time stock
-              shipments and campaigns.
-            </p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+          <div className="text-xs text-slate-500">
+            Fastest-Rising Market (4W)
           </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('forecast')}
-            className="text-xs font-semibold text-slate-900 hover:text-slate-700 inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>Open 4-Week Forecaster</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="text-base font-semibold text-slate-900 truncate">
+            {topFastestMarket
+              ? `${formatEntityLabel(
+                  topFastestMarket.country_name
+                )} · ${formatEntityLabel(topFastestMarket.category)}`
+              : 'Loading...'}
+          </div>
+          <div className="text-xs text-emerald-700 font-mono-tabular font-medium">
+            {topFastestMarket
+              ? `+${topFastestMarket.search_interest_trend_slope.toFixed(
+                  2
+                )} weekly growth · ${
+                  topFastestMarket.Cluster_Name || 'Momentum Leader'
+                }`
+              : 'Calculating 4-week momentum...'}
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between space-y-4">
-          <div className="space-y-2">
-            <div className="text-xs text-slate-500">
-              3+ Years vs. Last 4 Weeks
-            </div>
-            <h3 className="text-base font-semibold text-slate-900">
-              Compare Market Segmentations
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Compare multi-year strategic market groups against recent 4-week
-              momentum profiles across all 42 global markets, automatically
-              updated each week.
-            </p>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+          <div className="text-xs text-slate-500">
+            Top Underserved Demand (3Y+)
           </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('segmentation')}
-            className="text-xs font-semibold text-slate-900 hover:text-slate-700 inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>Explore Market Segments</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="text-base font-semibold text-slate-900 truncate">
+            {topUnderservedMarket
+              ? `${formatEntityLabel(
+                  topUnderservedMarket.country_name
+                )} · ${formatEntityLabel(topUnderservedMarket.category)}`
+              : 'Loading...'}
+          </div>
+          <div className="text-xs text-slate-600 font-mono-tabular">
+            {topUnderservedMarket
+              ? `Demand-to-Media Ratio: ${topUnderservedMarket.mean_demand_to_hype_ratio.toFixed(
+                  2
+                )}`
+              : 'Calculating demand ratio...'}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
+          <div className="text-xs text-slate-500">Saved Workspace Analyses</div>
+          <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+            {predictions.length}
+          </div>
+          <div className="text-xs text-slate-500">
+            <button
+              type="button"
+              onClick={() => onNavigate('history')}
+              className="underline hover:text-slate-900 cursor-pointer"
+            >
+              View saved predictions &amp; notes
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Visual Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Visual 1: Fastest-Rising 4-Week Markets Bar Chart */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-xs text-slate-500">
+                4-Week Momentum Visual · Demand Growth Slope
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                Fastest-Accelerating Consumer Markets (Last 4 Weeks)
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('segmentation')}
+              className="text-xs font-medium text-slate-700 hover:text-slate-900 underline cursor-pointer whitespace-nowrap"
+            >
+              Explore Map
+            </button>
+          </div>
+
+          {clustersLoading || risingMarketsChartData.length === 0 ? (
+            <div className="h-64 bg-slate-100 rounded-lg animate-pulse" />
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={risingMarketsChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="marketLabel"
+                    width={135}
+                    tick={{ fontSize: 11, fill: '#0F172A' }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload as {
+                        fullMarket: string;
+                        segmentName: string;
+                        growthSlope: number;
+                        searchInterest: number;
+                      };
+                      return (
+                        <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1 shadow-lg">
+                          <div className="font-semibold">{item.fullMarket}</div>
+                          <div className="text-slate-300">
+                            {item.segmentName}
+                          </div>
+                          <div className="font-mono-tabular pt-1 space-y-0.5">
+                            <div>4-Week Growth: +{item.growthSlope}</div>
+                            <div>Avg Search Interest: {item.searchInterest}</div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar
+                    dataKey="growthSlope"
+                    name="4-Week Demand Growth"
+                    fill="#0F172A"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* Visual 2: Market Segment Distribution Chart (by Segment Name) */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-xs text-slate-500">
+                Global Market Structure · Markets per Segment Name
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">
+                {reportHorizon === '4w'
+                  ? '4-Week Market Segments Breakdown (42 Markets)'
+                  : '3+ Year Long-Term Market Segments (42 Markets)'}
+              </h3>
+            </div>
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setReportHorizon('4w')}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                  reportHorizon === '4w'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                4 Weeks
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportHorizon('overall')}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                  reportHorizon === 'overall'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                3+ Years
+              </button>
+            </div>
+          </div>
+
+          {clustersLoading || segmentDistributionChartData.length === 0 ? (
+            <div className="h-64 bg-slate-100 rounded-lg animate-pulse" />
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={segmentDistributionChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="segmentName"
+                    width={165}
+                    tick={{ fontSize: 11, fill: '#0F172A' }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload as {
+                        segmentName: string;
+                        marketCount: number;
+                        avgSearch: number;
+                      };
+                      return (
+                        <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1 shadow-lg">
+                          <div className="font-semibold">{item.segmentName}</div>
+                          <div className="font-mono-tabular pt-1 space-y-0.5">
+                            <div>Markets Assigned: {item.marketCount}</div>
+                            <div>Avg Search Interest: {item.avgSearch}</div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar
+                    dataKey="marketCount"
+                    name="Markets in Segment"
+                    fill="#334155"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Live Market Intelligence Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 4-Week Momentum Markets */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -254,7 +514,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
                     <th className="py-2.5 px-4 font-medium">Market</th>
                     <th className="py-2.5 px-4 font-medium">
-                      4-Week Momentum Profile
+                      4-Week Momentum Segment
                     </th>
                     <th className="py-2.5 px-4 font-medium text-right">
                       Search Interest
@@ -276,8 +536,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           {formatEntityLabel(row.category)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-4 text-slate-600">
-                        {row.Cluster_Name || `Group ${row.Cluster_Label ?? '-'}`}
+                      <td className="py-2.5 px-4 text-slate-700 font-medium">
+                        {row.Cluster_Name || 'Momentum Segment'}
                       </td>
                       <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-800">
                         {row.mean_search_interest.toFixed(2)}
@@ -334,7 +594,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
                     <th className="py-2.5 px-4 font-medium">Market</th>
                     <th className="py-2.5 px-4 font-medium">
-                      3+ Year Market Group
+                      3+ Year Market Segment
                     </th>
                     <th className="py-2.5 px-4 font-medium text-right">
                       Media Mentions
@@ -356,8 +616,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                           {formatEntityLabel(row.category)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-4 text-slate-600">
-                        {row.Cluster_Name || `Group ${row.Cluster_Label ?? '-'}`}
+                      <td className="py-2.5 px-4 text-slate-700 font-medium">
+                        {row.Cluster_Name || 'Strategic Segment'}
                       </td>
                       <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-800">
                         {row.mean_media_volume.toFixed(1)}
@@ -374,7 +634,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* Dynamic Weekly Cluster Report Highlights */}
+      {/* Dynamic Weekly Market Segment Report Highlights */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div className="space-y-1">
@@ -382,16 +642,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               Live Weekly Backend Report · Updated Automatically Every Week
             </div>
             <h2 className="text-base font-semibold text-slate-900">
-              Weekly Cluster Report Intelligence (
+              Weekly Market Segment Report (
               {activeDashboardReport
-                ? `${activeDashboardReport.clusters.length} Discovered Clusters`
+                ? `${activeDashboardReport.clusters.length} Discovered Segments`
                 : 'Loading Report...'}
               )
             </h2>
             <p className="text-xs text-slate-500">
-              Directly parsed from the weekly clustering reports—highlighting
-              each discovered cluster&apos;s key insights, business use case,
-              and core commercial question answered.
+              Directly parsed from the weekly backend reports—highlighting each
+              market segment&apos;s key insights, business use case, and core
+              commercial question answered.
             </p>
           </div>
 
@@ -426,7 +686,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               onClick={() => onNavigate('segmentation')}
               className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
             >
-              Open Full Cluster Report
+              Open Full Segment Report
             </button>
           </div>
         </div>
@@ -442,36 +702,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         ) : activeDashboardReport ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeDashboardReport.clusters.map((cluster) => (
+            {activeDashboardReport.clusters.map((segment) => (
               <div
-                key={cluster.clusterLabel}
+                key={segment.clusterLabel}
                 className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between space-y-3"
               >
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-mono-tabular">
-                    <span>Cluster #{cluster.clusterLabel}</span>
-                    <span>
-                      {cluster.marketCount}{' '}
-                      {cluster.marketCount === 1 ? 'market' : 'markets'}
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      {segment.clusterName}
+                    </h3>
+                    <span className="text-xs text-slate-500 font-mono-tabular shrink-0">
+                      {segment.marketCount}{' '}
+                      {segment.marketCount === 1 ? 'market' : 'markets'}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    {cluster.clusterName}
-                  </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    {cluster.keyInsightsSummary}
+                    {segment.keyInsightsSummary}
                   </p>
-                  {cluster.businessUseCase && (
+                  {segment.businessUseCase && (
                     <div className="pt-1 text-xs text-slate-700 leading-relaxed">
                       <strong className="text-slate-900">Use Case:</strong>{' '}
-                      {cluster.businessUseCase}
+                      {segment.businessUseCase}
                     </div>
                   )}
                 </div>
 
-                {cluster.coreBusinessQuestion && (
+                {segment.coreBusinessQuestion && (
                   <div className="pt-2 border-t border-slate-200/80 text-xs text-slate-600 italic">
-                    &ldquo;{cluster.coreBusinessQuestion}&rdquo;
+                    &ldquo;{segment.coreBusinessQuestion}&rdquo;
                   </div>
                 )}
               </div>
@@ -479,7 +738,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         ) : (
           <div className="text-xs text-slate-500">
-            Weekly cluster report is syncing from backend...
+            Weekly segment report is syncing from backend...
           </div>
         )}
       </div>

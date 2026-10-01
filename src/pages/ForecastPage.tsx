@@ -14,7 +14,6 @@ import {
 } from '../components/PipelineFlowStatus';
 import {
   API_ENDPOINTS,
-  FEATURE_DESCRIPTIONS,
   formatEntityLabel,
   MODEL_SPECIFICATIONS,
   VALID_CATEGORIES,
@@ -606,42 +605,6 @@ export const ForecastPage: React.FC = () => {
               </p>
             </div>
           )}
-
-          {/* Understandable Explanation of the Forecasting Factors */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">
-                What Drives This 4-Week Forecast?
-              </h3>
-              <p className="text-xs text-slate-500">
-                Each 4-week projection combines your selected country and
-                category with recent shopper momentum, 4-week demand stability,
-                media attention, local economic conditions, and seasonal
-                calendar patterns:
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-              {MODEL_SPECIFICATIONS.forecast.orderedFeatures
-                .filter((f) => f !== 'country_name' && f !== 'category')
-                .map((featKey) => {
-                  const info = FEATURE_DESCRIPTIONS[featKey];
-                  return (
-                    <div
-                      key={featKey}
-                      className="p-3 border border-slate-100 bg-slate-50/60 rounded-lg space-y-0.5"
-                    >
-                      <div className="font-semibold text-slate-900">
-                        {info?.label || formatEntityLabel(featKey)}
-                      </div>
-                      <div className="text-slate-500">
-                        {info?.description || 'Market outlook indicator'}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
         </div>
       </div>
     </div>

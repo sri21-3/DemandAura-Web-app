@@ -64,7 +64,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<CanonicalCategory | ''>(
     ''
   );
-  const [clusterFilter, setClusterFilter] = useState<string>('all');
+  const [segmentFilter, setSegmentFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'table' | 'report'>('table');
   const [showRawMarkdown, setShowRawMarkdown] = useState(false);
 
@@ -110,7 +110,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       setLocalReportError(
         err instanceof Error
           ? err.message
-          : 'Failed loading weekly segmentation reports.'
+          : 'Failed loading weekly market segment reports.'
       );
     } finally {
       setLocalReportLoading(false);
@@ -169,7 +169,6 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         endpoint
       );
 
-      // Fetch both the cluster records and the latest weekly report in parallel
       const [res, freshReport] = await Promise.all([
         mode === 'overall'
           ? nexusDemandApi.getMarketSegmentation(validatedFilter, (meta) =>
@@ -203,14 +202,14 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         category: validatedFilter.category || 'All_3_Categories',
         summaryValue: sample
           ? `${res.total_records} markets (${
-              sample.Cluster_Name || `Segment ${sample.Cluster_Label}`
+              sample.Cluster_Name || 'Market Segment'
             })`
           : `${res.total_records} markets matched`,
         numericResult: res.total_records,
         recordDate:
           mode === 'overall' ? '3+ Year History' : 'Recent 4-Week Window',
         predictionStatus: 'success',
-        notes: `Segment filter: ${clusterFilter}`,
+        notes: `Segment filter: ${segmentFilter}`,
       });
     } catch (err: unknown) {
       const errMessage =
@@ -248,7 +247,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           recordDate:
             mode === 'overall' ? '3+ Year History' : 'Recent 4-Week Window',
           predictionStatus: 'error',
-          notes: `Segment filter: ${clusterFilter}`,
+          notes: `Segment filter: ${segmentFilter}`,
         });
       } catch {
         // Non-blocking audit log on failure
@@ -262,7 +261,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
     }
   };
 
-  const clusterGroups = useMemo(() => {
+  const marketSegments = useMemo(() => {
     const map = new Map<
       number,
       {
@@ -281,23 +280,23 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
 
     baseDataset.forEach((row) => {
       const id = row.Cluster_Label ?? -1;
-      const reportCluster = parsedReport?.clusterMap[id];
+      const reportSegment = parsedReport?.clusterMap[id];
       const existing = map.get(id);
       if (!existing) {
         map.set(id, {
           label: id,
           name:
-            reportCluster?.clusterName ||
+            reportSegment?.clusterName ||
             row.Cluster_Name ||
-            `Market Group ${id}`,
+            `Market Segment ${id + 1}`,
           count: 1,
           avgInterest: row.mean_search_interest,
           avgMedia: row.mean_media_volume,
           avgRatio: row.mean_demand_to_hype_ratio,
           avgSlope: row.search_interest_trend_slope,
           avgSentiment: row.mean_net_sentiment,
-          keyInsightsSummary: reportCluster?.keyInsightsSummary || '',
-          coreBusinessQuestion: reportCluster?.coreBusinessQuestion || '',
+          keyInsightsSummary: reportSegment?.keyInsightsSummary || '',
+          coreBusinessQuestion: reportSegment?.coreBusinessQuestion || '',
         });
       } else {
         const nextCount = existing.count + 1;
@@ -322,7 +321,6 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       }
     });
 
-    // If report loaded before cluster rows, fallback to parsedReport clusters
     if (map.size === 0 && parsedReport) {
       for (const c of parsedReport.clusters) {
         map.set(c.clusterLabel, {
@@ -358,23 +356,21 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         return false;
       }
       if (
-        clusterFilter !== 'all' &&
-        String(row.Cluster_Label) !== clusterFilter
+        segmentFilter !== 'all' &&
+        String(row.Cluster_Label) !== segmentFilter
       ) {
         return false;
       }
       return true;
     });
-  }, [activeDataset, countryFilter, categoryFilter, clusterFilter]);
+  }, [activeDataset, countryFilter, categoryFilter, segmentFilter]);
 
-  // Determine if a specific cluster's report profile should be spotlighted
-  const spotlightClusterReport = useMemo(() => {
+  const spotlightSegmentReport = useMemo(() => {
     if (!parsedReport) return null;
-    if (clusterFilter !== 'all') {
-      const id = Number.parseInt(clusterFilter, 10);
+    if (segmentFilter !== 'all') {
+      const id = Number.parseInt(segmentFilter, 10);
       return parsedReport.clusterMap[id] || null;
     }
-    // If filtered rows all belong to a single cluster (e.g. when a Country + Category is chosen), spotlight that cluster!
     if (filteredRows.length > 0) {
       const uniqueLabels = new Set(
         filteredRows
@@ -387,7 +383,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       }
     }
     return null;
-  }, [parsedReport, clusterFilter, filteredRows]);
+  }, [parsedReport, segmentFilter, filteredRows]);
 
   const handleExportCsv = () => {
     if (filteredRows.length === 0) return;
@@ -400,13 +396,17 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       'search_interest_trend_slope',
       'mean_net_sentiment',
       'mean_gdp_per_capita',
-      'Cluster_Label',
-      'Cluster_Name',
+      'Segment_Name',
     ];
     const csvLines = [
       headers.join(','),
-      ...filteredRows.map((r) =>
-        [
+      ...filteredRows.map((r) => {
+        const segId = r.Cluster_Label ?? -1;
+        const segName =
+          parsedReport?.clusterMap[segId]?.clusterName ||
+          r.Cluster_Name ||
+          'Unassigned';
+        return [
           r.country_name,
           r.category,
           r.mean_search_interest,
@@ -415,10 +415,9 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           r.search_interest_trend_slope,
           r.mean_net_sentiment,
           r.mean_gdp_per_capita,
-          r.Cluster_Label ?? '',
-          `"${(r.Cluster_Name || '').replace(/"/g, '""')}"`,
-        ].join(',')
-      ),
+          `"${segName.replace(/"/g, '""')}"`,
+        ].join(',');
+      }),
     ];
     const blob = new Blob([csvLines.join('\n')], {
       type: 'text/csv;charset=utf-8;',
@@ -459,7 +458,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-slate-200">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>Global Market Segmentation &amp; Weekly Cluster Reports</span>
+            <span>Global Market Segmentation &amp; Weekly Reports</span>
             <span aria-hidden="true">·</span>
             <span>
               {mode === 'overall'
@@ -468,14 +467,14 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             </span>
           </div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-            Global Market Segmentation &amp; Dynamic Weekly Cluster Reports
+            Global Market Segmentation &amp; Dynamic Weekly Reports
           </h1>
           <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
             Compare how all 42 country–category markets group together across{' '}
             <strong>multi-year long-term history</strong> versus the{' '}
             <strong>most recent 4 weeks</strong>. Every week, both the market
-            clusters and the executive cluster reports update automatically from
-            the backend pipeline—explaining each cluster&apos;s metric trends,
+            segments and the executive reports update automatically from the
+            backend pipeline—explaining each segment&apos;s metric trends,
             business interpretation, recommended use case, and core business
             question answered.
           </p>
@@ -488,7 +487,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             disabled={isProcessing}
             onClick={() => {
               setMode('overall');
-              setClusterFilter('all');
+              setSegmentFilter('all');
             }}
             className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 ${
               mode === 'overall'
@@ -503,7 +502,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             disabled={isProcessing}
             onClick={() => {
               setMode('4w');
-              setClusterFilter('all');
+              setSegmentFilter('all');
             }}
             className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 ${
               mode === '4w'
@@ -531,40 +530,42 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         }
       />
 
-      {/* Dynamic Weekly Cluster Cards (Enriched with Live Report Insights) */}
+      {/* Dynamic Weekly Market Segment Cards */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="text-xs font-semibold text-slate-900">
             {mode === 'overall'
-              ? `Discovered Long-Term Market Clusters This Week (${clusterGroups.length} Active Groups · Click any cluster to inspect its weekly report & filter markets)`
-              : `Discovered 4-Week Momentum Clusters This Week (${clusterGroups.length} Active Profiles · Click any cluster to inspect its weekly report & filter markets)`}
+              ? `Discovered Long-Term Market Segments This Week (${marketSegments.length} Active Segments · Click any segment to view its weekly report & filter markets)`
+              : `Discovered 4-Week Momentum Profiles This Week (${marketSegments.length} Active Profiles · Click any profile to view its weekly report & filter markets)`}
           </div>
           <button
             type="button"
-            onClick={() => setActiveTab(activeTab === 'report' ? 'table' : 'report')}
+            onClick={() =>
+              setActiveTab(activeTab === 'report' ? 'table' : 'report')
+            }
             className="text-xs font-medium text-slate-700 hover:text-slate-900 underline inline-flex items-center gap-1 cursor-pointer self-start"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>
               {activeTab === 'report'
                 ? 'Switch to Market Map & Table'
-                : `Read Full Weekly Cluster Report (${
-                    parsedReport?.clusters.length || clusterGroups.length
-                  } Clusters)`}
+                : `Read Full Weekly Executive Report (${
+                    parsedReport?.clusters.length || marketSegments.length
+                  } Segments)`}
             </span>
           </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {clusterGroups.map((cg) => {
-            const selected = clusterFilter === String(cg.label);
+          {marketSegments.map((seg) => {
+            const selected = segmentFilter === String(seg.label);
             return (
               <button
-                key={cg.label}
+                key={seg.label}
                 type="button"
                 disabled={isProcessing}
                 onClick={() =>
-                  setClusterFilter(selected ? 'all' : String(cg.label))
+                  setSegmentFilter(selected ? 'all' : String(seg.label))
                 }
                 className={`text-left p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between space-y-3 disabled:opacity-60 ${
                   selected
@@ -573,28 +574,25 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                 }`}
               >
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-mono-tabular">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-sm font-semibold leading-snug">
+                      {seg.name}
+                    </div>
                     <span
-                      className={selected ? 'text-slate-300' : 'text-slate-500'}
+                      className={`text-xs font-mono-tabular shrink-0 ${
+                        selected ? 'text-slate-300' : 'text-slate-500'
+                      }`}
                     >
-                      Cluster {cg.label}
-                    </span>
-                    <span
-                      className={selected ? 'text-slate-300' : 'text-slate-500'}
-                    >
-                      {cg.count} {cg.count === 1 ? 'market' : 'markets'}
+                      {seg.count} {seg.count === 1 ? 'market' : 'markets'}
                     </span>
                   </div>
-                  <div className="text-sm font-semibold leading-snug">
-                    {cg.name}
-                  </div>
-                  {cg.keyInsightsSummary && (
+                  {seg.keyInsightsSummary && (
                     <p
                       className={`text-xs leading-relaxed line-clamp-2 ${
                         selected ? 'text-slate-300' : 'text-slate-600'
                       }`}
                     >
-                      {cg.keyInsightsSummary}
+                      {seg.keyInsightsSummary}
                     </p>
                   )}
                 </div>
@@ -606,10 +604,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                       : 'border-slate-100 text-slate-600'
                   }`}
                 >
-                  <div>Search: {cg.avgInterest.toFixed(1)}</div>
+                  <div>Search: {seg.avgInterest.toFixed(1)}</div>
                   <div>
-                    Trend: {cg.avgSlope >= 0 ? '+' : ''}
-                    {cg.avgSlope.toFixed(2)}
+                    Trend: {seg.avgSlope >= 0 ? '+' : ''}
+                    {seg.avgSlope.toFixed(2)}
                   </div>
                 </div>
               </button>
@@ -660,23 +658,23 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           </select>
 
           <select
-            value={clusterFilter}
+            value={segmentFilter}
             disabled={isProcessing}
-            onChange={(e) => setClusterFilter(e.target.value)}
+            onChange={(e) => setSegmentFilter(e.target.value)}
             aria-label="Filter by Market Segment"
             className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg disabled:bg-slate-50"
           >
-            <option value="all">All Market Clusters</option>
-            {clusterGroups.map((cg) => (
-              <option key={cg.label} value={String(cg.label)}>
-                Cluster {cg.label}: {cg.name} ({cg.count})
+            <option value="all">All Market Segments</option>
+            {marketSegments.map((seg) => (
+              <option key={seg.label} value={String(seg.label)}>
+                {seg.name} ({seg.count})
               </option>
             ))}
           </select>
 
           {(countryFilter ||
             categoryFilter ||
-            clusterFilter !== 'all' ||
+            segmentFilter !== 'all' ||
             queriedOverall ||
             queried4W) && (
             <button
@@ -685,7 +683,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
               onClick={() => {
                 setCountryFilter('');
                 setCategoryFilter('');
-                setClusterFilter('all');
+                setSegmentFilter('all');
                 setQueriedOverall(null);
                 setQueried4W(null);
               }}
@@ -739,7 +737,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Weekly Cluster Report ({parsedReport?.clusters.length || clusterGroups.length})
+              Executive Report (
+              {parsedReport?.clusters.length || marketSegments.length})
             </button>
           </div>
         </div>
@@ -747,22 +746,20 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
 
       {activeTab === 'table' ? (
         <div className="space-y-8">
-          {/* Dynamic Weekly Report Spotlight when a cluster or single-cluster market is selected */}
-          {spotlightClusterReport && (
+          {/* Dynamic Weekly Report Spotlight when a segment or single-segment market is selected */}
+          {spotlightSegmentReport && (
             <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span>Live Weekly Cluster Report Intelligence</span>
+                    <span>Live Weekly Segment Report Intelligence</span>
                     <span aria-hidden="true">·</span>
                     <span className="font-mono-tabular">
-                      Cluster #{spotlightClusterReport.clusterLabel} (
-                      {spotlightClusterReport.recordCountText})
+                      {spotlightSegmentReport.recordCountText}
                     </span>
                   </div>
                   <h2 className="text-lg font-semibold text-slate-900">
-                    Cluster {spotlightClusterReport.clusterLabel}:{' '}
-                    {spotlightClusterReport.clusterName}
+                    {spotlightSegmentReport.clusterName}
                   </h2>
                 </div>
 
@@ -774,25 +771,25 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                   >
                     Open Full Weekly Report
                   </button>
-                  {clusterFilter !== 'all' && (
+                  {segmentFilter !== 'all' && (
                     <button
                       type="button"
-                      onClick={() => setClusterFilter('all')}
+                      onClick={() => setSegmentFilter('all')}
                       className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer whitespace-nowrap"
                     >
-                      Show All Clusters
+                      Show All Segments
                     </button>
                   )}
                 </div>
               </div>
 
-              {spotlightClusterReport.coreBusinessQuestion && (
+              {spotlightSegmentReport.coreBusinessQuestion && (
                 <div className="border-l-2 border-slate-900 pl-4 py-1 bg-slate-50/70 rounded-r-lg">
                   <div className="text-xs font-semibold text-slate-900">
-                    Core Business Question Answered by This Cluster:
+                    Core Business Question Answered:
                   </div>
                   <p className="text-sm text-slate-700 italic">
-                    &ldquo;{spotlightClusterReport.coreBusinessQuestion}&rdquo;
+                    &ldquo;{spotlightSegmentReport.coreBusinessQuestion}&rdquo;
                   </p>
                 </div>
               )}
@@ -803,8 +800,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     Metric Trends &amp; Summary
                   </div>
                   <p className="text-slate-600 leading-relaxed">
-                    {spotlightClusterReport.metricTrends ||
-                      spotlightClusterReport.keyInsightsSummary}
+                    {spotlightSegmentReport.metricTrends ||
+                      spotlightSegmentReport.keyInsightsSummary}
                   </p>
                 </div>
 
@@ -813,8 +810,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     Business Interpretation
                   </div>
                   <p className="text-slate-600 leading-relaxed">
-                    {spotlightClusterReport.businessInterpretation ||
-                      spotlightClusterReport.keyInsightsSummary}
+                    {spotlightSegmentReport.businessInterpretation ||
+                      spotlightSegmentReport.keyInsightsSummary}
                   </p>
                 </div>
 
@@ -823,8 +820,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     Recommended Business Use Case
                   </div>
                   <p className="text-slate-600 leading-relaxed">
-                    {spotlightClusterReport.businessUseCase ||
-                      'Tailor marketing and inventory strategy to match this cluster profile.'}
+                    {spotlightSegmentReport.businessUseCase ||
+                      'Tailor marketing and inventory strategy to match this market profile.'}
                   </p>
                 </div>
               </div>
@@ -893,10 +890,9 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                             {formatEntityLabel(rec.category)}
                           </div>
                           <div className="text-slate-300 font-medium">
-                            Cluster #{rec.Cluster_Label}:{' '}
                             {repInfo?.clusterName ||
                               rec.Cluster_Name ||
-                              `Group ${rec.Cluster_Label}`}
+                              'Market Segment'}
                           </div>
                           {repInfo?.keyInsightsSummary && (
                             <div className="text-slate-400 leading-snug">
@@ -944,8 +940,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
               </h3>
               <span className="text-xs text-slate-500">
                 {mode === 'overall'
-                  ? '3+ Year Historical Averages · Click any Cluster to view report insights'
-                  : 'Most Recent 4-Week Averages · Click any Cluster to view report insights'}
+                  ? '3+ Year Historical Averages · Click any Segment Name to view report insights'
+                  : 'Most Recent 4-Week Averages · Click any Segment Name to view report insights'}
               </span>
             </div>
 
@@ -965,9 +961,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
                       <th className="py-3 px-4 font-medium">Country</th>
                       <th className="py-3 px-4 font-medium">Category</th>
-                      <th className="py-3 px-4 font-medium">
-                        Assigned Cluster (Weekly Report)
-                      </th>
+                      <th className="py-3 px-4 font-medium">Market Segment</th>
                       <th className="py-3 px-4 font-medium text-right">
                         Avg Search Interest
                       </th>
@@ -990,8 +984,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredRows.map((row) => {
-                      const clusterId = row.Cluster_Label ?? -1;
-                      const repCluster = parsedReport?.clusterMap[clusterId];
+                      const segId = row.Cluster_Label ?? -1;
+                      const repSegment = parsedReport?.clusterMap[segId];
                       return (
                         <tr
                           key={`${row.country_name}-${row.category}`}
@@ -1007,26 +1001,21 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                             <button
                               type="button"
                               onClick={() =>
-                                setClusterFilter(
-                                  clusterFilter === String(clusterId)
+                                setSegmentFilter(
+                                  segmentFilter === String(segId)
                                     ? 'all'
-                                    : String(clusterId)
+                                    : String(segId)
                                 )
                               }
-                              className="text-left hover:underline cursor-pointer"
+                              className="text-left hover:underline cursor-pointer font-medium text-slate-900"
                               title={
-                                repCluster?.keyInsightsSummary ||
-                                'Click to filter and view weekly report for this cluster'
+                                repSegment?.keyInsightsSummary ||
+                                'Click to filter and view weekly report for this market segment'
                               }
                             >
-                              <span className="font-mono-tabular text-slate-400 mr-1.5">
-                                #{row.Cluster_Label ?? '-'}
-                              </span>
-                              <span className="font-medium text-slate-900">
-                                {repCluster?.clusterName ||
-                                  row.Cluster_Name ||
-                                  'Unassigned'}
-                              </span>
+                              {repSegment?.clusterName ||
+                                row.Cluster_Name ||
+                                'Unassigned'}
                             </button>
                           </td>
                           <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900">
@@ -1067,7 +1056,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           </div>
         </div>
       ) : (
-        /* Dynamic Weekly Cluster Report Tab (Parsed Live from Backend Report API) */
+        /* Dynamic Weekly Executive Report Tab */
         <div className="space-y-8">
           {/* Report Header & Sync Controls */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -1090,11 +1079,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     : '4-Week Market Segmentation Report')}
               </h2>
               <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
-                This report is generated by the backend clustering pipeline and
-                parsed dynamically every week. As consumer search interest,
-                media volume, and sentiment shift, the number of clusters,
-                recommended cluster names, metric trends, and business use cases
-                automatically update here.
+                This report is generated by the backend pipeline and parsed
+                dynamically every week. As consumer search interest, media
+                volume, and sentiment shift, the segment names, market counts,
+                metric trends, and business use cases automatically update here.
               </p>
             </div>
 
@@ -1173,7 +1161,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             </div>
           ) : (
             <div className="space-y-8">
-              {/* SECTION 1: SUMMARY TABLE (Dynamically parsed from report) */}
+              {/* SECTION 1: SUMMARY TABLE (Using Segment Names Directly) */}
               {parsedReport.summaryRows.length > 0 && (
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1182,12 +1170,13 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                         Section 1 · Weekly Executive Summary Table
                       </div>
                       <h3 className="text-sm font-semibold text-slate-900">
-                        Discovered Clusters Overview ({parsedReport.summaryRows.length}{' '}
-                        Clusters in Current Weekly Run)
+                        Discovered Market Segments Overview (
+                        {parsedReport.summaryRows.length} Segments in Current
+                        Weekly Run)
                       </h3>
                     </div>
                     <span className="text-xs text-slate-500">
-                      Click &ldquo;Filter Markets&rdquo; to inspect any cluster on
+                      Click &ldquo;Filter Markets&rdquo; to inspect any segment on
                       the Market Map
                     </span>
                   </div>
@@ -1197,13 +1186,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                       <thead>
                         <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
                           <th className="py-3 px-4 font-medium whitespace-nowrap">
-                            Cluster ID
+                            Market Segment Name
                           </th>
                           <th className="py-3 px-4 font-medium whitespace-nowrap">
                             Market Count
-                          </th>
-                          <th className="py-3 px-4 font-medium whitespace-nowrap">
-                            Recommended Cluster Name
                           </th>
                           <th className="py-3 px-4 font-medium">
                             Key Insights Summary (From Weekly Report)
@@ -1219,15 +1205,12 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                             key={row.clusterLabel}
                             className="hover:bg-slate-50"
                           >
-                            <td className="py-3 px-4 font-mono-tabular font-semibold text-slate-900 whitespace-nowrap">
-                              Cluster #{row.clusterLabel}
+                            <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                              {row.clusterName}
                             </td>
                             <td className="py-3 px-4 font-mono-tabular text-slate-700 whitespace-nowrap">
                               {row.marketCount}{' '}
                               {row.marketCount === 1 ? 'market' : 'markets'}
-                            </td>
-                            <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
-                              {row.clusterName}
                             </td>
                             <td className="py-3 px-4 text-slate-600 leading-relaxed">
                               {row.keyInsightsSummary}
@@ -1236,7 +1219,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setClusterFilter(String(row.clusterLabel));
+                                  setSegmentFilter(String(row.clusterLabel));
                                   setActiveTab('table');
                                 }}
                                 className="px-2.5 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md hover:bg-slate-100 cursor-pointer"
@@ -1252,11 +1235,11 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                 </div>
               )}
 
-              {/* SECTION 2: DETAILED CLUSTER BREAKDOWN (Dynamically parsed for each cluster) */}
+              {/* SECTION 2: DETAILED SEGMENT BREAKDOWN */}
               <div className="space-y-4">
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">
-                    Section 2 · Detailed Cluster-by-Cluster Breakdown
+                    Section 2 · Detailed Market Segment Breakdown
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900">
                     Strategic Interpretation, Metric Trends &amp; Business Use
@@ -1265,60 +1248,57 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
-                  {parsedReport.clusters.map((cluster) => (
+                  {parsedReport.clusters.map((segment) => (
                     <div
-                      key={cluster.clusterLabel}
+                      key={segment.clusterLabel}
                       className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-xs text-slate-500 font-mono-tabular">
-                            <span>Cluster #{cluster.clusterLabel}</span>
+                            <span>Market Segment</span>
                             <span aria-hidden="true">·</span>
                             <span>
-                              Record Count: {cluster.recordCountText}
+                              Record Count: {segment.recordCountText}
                             </span>
                           </div>
                           <h4 className="text-lg font-semibold text-slate-900">
-                            Cluster {cluster.clusterLabel}:{' '}
-                            {cluster.clusterName}
+                            {segment.clusterName}
                           </h4>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => {
-                            setClusterFilter(String(cluster.clusterLabel));
+                            setSegmentFilter(String(segment.clusterLabel));
                             setActiveTab('table');
                           }}
                           className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 cursor-pointer whitespace-nowrap self-start"
                         >
-                          View {cluster.marketCount}{' '}
-                          {cluster.marketCount === 1 ? 'Market' : 'Markets'} on
+                          View {segment.marketCount}{' '}
+                          {segment.marketCount === 1 ? 'Market' : 'Markets'} on
                           Map
                         </button>
                       </div>
 
-                      {/* Core Business Question Answered Callout */}
-                      {cluster.coreBusinessQuestion && (
+                      {segment.coreBusinessQuestion && (
                         <div className="border-l-2 border-slate-900 pl-4 py-1.5 bg-slate-50/70 rounded-r-lg space-y-0.5">
                           <div className="text-xs font-semibold text-slate-900">
                             Core Business Question Answered:
                           </div>
                           <p className="text-sm text-slate-800 italic">
-                            &ldquo;{cluster.coreBusinessQuestion}&rdquo;
+                            &ldquo;{segment.coreBusinessQuestion}&rdquo;
                           </p>
                         </div>
                       )}
 
-                      {/* 3-Column Breakdown: Metric Trends, Business Interpretation, Business Use Case */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                         <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
                           <div className="font-semibold text-slate-900">
                             Metric Trends
                           </div>
                           <p className="text-slate-600 leading-relaxed">
-                            {cluster.metricTrends || cluster.keyInsightsSummary}
+                            {segment.metricTrends || segment.keyInsightsSummary}
                           </p>
                         </div>
 
@@ -1327,8 +1307,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                             Business Interpretation
                           </div>
                           <p className="text-slate-600 leading-relaxed">
-                            {cluster.businessInterpretation ||
-                              cluster.keyInsightsSummary}
+                            {segment.businessInterpretation ||
+                              segment.keyInsightsSummary}
                           </p>
                         </div>
 
@@ -1337,16 +1317,15 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                             Recommended Business Use Case
                           </div>
                           <p className="text-slate-600 leading-relaxed">
-                            {cluster.businessUseCase ||
-                              cluster.keyInsightsSummary}
+                            {segment.businessUseCase ||
+                              segment.keyInsightsSummary}
                           </p>
                         </div>
                       </div>
 
-                      {/* Render any additional dynamic bullets if added in future weekly reports */}
-                      {cluster.additionalBullets.length > 0 && (
+                      {segment.additionalBullets.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                          {cluster.additionalBullets.map((b) => (
+                          {segment.additionalBullets.map((b) => (
                             <div
                               key={b.label}
                               className="p-3 bg-slate-50 border border-slate-100 rounded-lg"
@@ -1360,15 +1339,14 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                         </div>
                       )}
 
-                      {/* Assigned Markets in This Cluster (Dynamically matched from weekly data) */}
-                      {cluster.markets.length > 0 && (
+                      {segment.markets.length > 0 && (
                         <div className="pt-2 border-t border-slate-100 space-y-2">
                           <div className="text-xs font-semibold text-slate-900">
                             Assigned Country–Category Markets This Week (
-                            {cluster.markets.length}):
+                            {segment.markets.length}):
                           </div>
                           <div className="flex flex-wrap gap-1.5">
-                            {cluster.markets.map((m) => (
+                            {segment.markets.map((m) => (
                               <button
                                 key={`${m.country_name}-${m.category}`}
                                 type="button"
@@ -1379,7 +1357,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                                   setCategoryFilter(
                                     m.category as CanonicalCategory
                                   );
-                                  setClusterFilter('all');
+                                  setSegmentFilter('all');
                                   setActiveTab('table');
                                 }}
                                 className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-md transition-colors cursor-pointer"

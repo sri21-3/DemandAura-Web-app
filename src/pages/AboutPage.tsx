@@ -149,7 +149,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
           </h2>
           <p className="text-sm text-slate-600 max-w-3xl">
             Each of our 3 consumer lifestyle verticals is built from{' '}
-            <strong>5 structured consumer topic clusters</strong> (21 search
+            <strong>5 structured consumer topic themes</strong> (21 search
             keywords per category, 63 keywords total) tracked weekly across all
             14 countries:
           </p>
@@ -163,7 +163,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             >
               <div className="border-b border-slate-100 pb-3 space-y-1">
                 <div className="text-xs text-slate-500">
-                  5 Topic Clusters · 21 Tracked Keywords
+                  5 Topic Themes · 21 Tracked Keywords
                 </div>
                 <h3 className="text-base font-semibold text-slate-900">
                   {cat.label}
