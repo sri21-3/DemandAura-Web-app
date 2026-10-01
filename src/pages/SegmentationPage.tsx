@@ -9,7 +9,7 @@ import {
   YAxis,
   ZAxis,
 } from 'recharts';
-import { Download } from 'lucide-react';
+import { Download, FileText, RefreshCw } from 'lucide-react';
 import {
   PipelineErrorState,
   PipelineFlowStatus,
@@ -34,17 +34,28 @@ import {
   PipelineExecutionMeta,
   SegmentationRecord,
 } from '../types/models';
+import { parseSegmentationReport } from '../utils/reportParser';
 
 interface SegmentationPageProps {
   overallClusters: SegmentationRecord[];
   fourWeekClusters: SegmentationRecord[];
   clustersLoading: boolean;
+  overallReport?: MarkdownReportResponse | null;
+  fourWeekReport?: MarkdownReportResponse | null;
+  reportsLoading?: boolean;
+  reportsError?: string | null;
+  onRefreshAll?: () => Promise<void>;
 }
 
 export const SegmentationPage: React.FC<SegmentationPageProps> = ({
   overallClusters,
   fourWeekClusters,
   clustersLoading,
+  overallReport: propOverallReport = null,
+  fourWeekReport: propFourWeekReport = null,
+  reportsLoading: propReportsLoading = false,
+  reportsError: propReportsError = null,
+  onRefreshAll,
 }) => {
   const { logPrediction } = useAuth();
 
@@ -55,6 +66,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
   );
   const [clusterFilter, setClusterFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'table' | 'report'>('table');
+  const [showRawMarkdown, setShowRawMarkdown] = useState(false);
 
   const [queriedOverall, setQueriedOverall] = useState<
     SegmentationRecord[] | null
@@ -67,12 +79,12 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
   const [pipelineMeta, setPipelineMeta] =
     useState<PipelineExecutionMeta | null>(null);
 
-  const [overallReport, setOverallReport] =
+  const [localOverallReport, setLocalOverallReport] =
     useState<MarkdownReportResponse | null>(null);
-  const [fourWeekReport, setFourWeekReport] =
+  const [localFourWeekReport, setLocalFourWeekReport] =
     useState<MarkdownReportResponse | null>(null);
-  const [reportLoading, setReportLoading] = useState(false);
-  const [reportError, setReportError] = useState<string | null>(null);
+  const [localReportLoading, setLocalReportLoading] = useState(false);
+  const [localReportError, setLocalReportError] = useState<string | null>(null);
 
   const timerRef = useRef<number | null>(null);
 
@@ -84,36 +96,51 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    async function loadReports() {
-      setReportLoading(true);
-      setReportError(null);
-      try {
-        const [repOverall, rep4W] = await Promise.all([
-          nexusDemandApi.getMarketSegmentationReport(),
-          nexusDemandApi.get4WeeksSegmentationReport(),
-        ]);
-        setOverallReport(repOverall);
-        setFourWeekReport(rep4W);
-      } catch (err: unknown) {
-        setReportError(
-          err instanceof Error
-            ? err.message
-            : 'Failed loading executive market briefings.'
-        );
-      } finally {
-        setReportLoading(false);
-      }
+  const fetchLatestReports = async () => {
+    setLocalReportLoading(true);
+    setLocalReportError(null);
+    try {
+      const [repOverall, rep4W] = await Promise.all([
+        nexusDemandApi.getMarketSegmentationReport(),
+        nexusDemandApi.get4WeeksSegmentationReport(),
+      ]);
+      setLocalOverallReport(repOverall);
+      setLocalFourWeekReport(rep4W);
+    } catch (err: unknown) {
+      setLocalReportError(
+        err instanceof Error
+          ? err.message
+          : 'Failed loading weekly segmentation reports.'
+      );
+    } finally {
+      setLocalReportLoading(false);
     }
-    loadReports();
-  }, []);
+  };
+
+  useEffect(() => {
+    if (!propOverallReport && !propFourWeekReport && !propReportsLoading) {
+      fetchLatestReports();
+    }
+  }, [propOverallReport, propFourWeekReport, propReportsLoading]);
+
+  const effectiveOverallReport = localOverallReport ?? propOverallReport;
+  const effectiveFourWeekReport = localFourWeekReport ?? propFourWeekReport;
+  const reportLoading = localReportLoading || propReportsLoading;
+  const reportError = localReportError || propReportsError;
 
   const baseDataset = mode === 'overall' ? overallClusters : fourWeekClusters;
   const activeDataset =
     mode === 'overall'
       ? queriedOverall ?? overallClusters
       : queried4W ?? fourWeekClusters;
-  const activeReport = mode === 'overall' ? overallReport : fourWeekReport;
+  const activeReport =
+    mode === 'overall' ? effectiveOverallReport : effectiveFourWeekReport;
+
+  // Dynamically parse the live weekly report content alongside the current dataset
+  const parsedReport = useMemo(
+    () => parseSegmentationReport(activeReport, baseDataset),
+    [activeReport, baseDataset]
+  );
 
   const handleExecuteSegmentationQuery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -142,21 +169,26 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         endpoint
       );
 
-      const res =
+      // Fetch both the cluster records and the latest weekly report in parallel
+      const [res, freshReport] = await Promise.all([
         mode === 'overall'
-          ? await nexusDemandApi.getMarketSegmentation(
-              validatedFilter,
-              (meta) => setPipelineMeta(meta)
+          ? nexusDemandApi.getMarketSegmentation(validatedFilter, (meta) =>
+              setPipelineMeta(meta)
             )
-          : await nexusDemandApi.get4WeeksSegmentation(
-              validatedFilter,
-              (meta) => setPipelineMeta(meta)
-            );
+          : nexusDemandApi.get4WeeksSegmentation(validatedFilter, (meta) =>
+              setPipelineMeta(meta)
+            ),
+        mode === 'overall'
+          ? nexusDemandApi.getMarketSegmentationReport().catch(() => null)
+          : nexusDemandApi.get4WeeksSegmentationReport().catch(() => null),
+      ]);
 
       if (mode === 'overall') {
         setQueriedOverall(res.data);
+        if (freshReport) setLocalOverallReport(freshReport);
       } else {
         setQueried4W(res.data);
+        if (freshReport) setLocalFourWeekReport(freshReport);
       }
 
       const sample = res.data[0];
@@ -239,23 +271,33 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         count: number;
         avgInterest: number;
         avgMedia: number;
+        avgRatio: number;
         avgSlope: number;
         avgSentiment: number;
+        keyInsightsSummary: string;
+        coreBusinessQuestion: string;
       }
     >();
 
     baseDataset.forEach((row) => {
       const id = row.Cluster_Label ?? -1;
+      const reportCluster = parsedReport?.clusterMap[id];
       const existing = map.get(id);
       if (!existing) {
         map.set(id, {
           label: id,
-          name: row.Cluster_Name || `Market Group ${id}`,
+          name:
+            reportCluster?.clusterName ||
+            row.Cluster_Name ||
+            `Market Group ${id}`,
           count: 1,
           avgInterest: row.mean_search_interest,
           avgMedia: row.mean_media_volume,
+          avgRatio: row.mean_demand_to_hype_ratio,
           avgSlope: row.search_interest_trend_slope,
           avgSentiment: row.mean_net_sentiment,
+          keyInsightsSummary: reportCluster?.keyInsightsSummary || '',
+          coreBusinessQuestion: reportCluster?.coreBusinessQuestion || '',
         });
       } else {
         const nextCount = existing.count + 1;
@@ -264,6 +306,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           nextCount;
         existing.avgMedia =
           (existing.avgMedia * existing.count + row.mean_media_volume) /
+          nextCount;
+        existing.avgRatio =
+          (existing.avgRatio * existing.count +
+            row.mean_demand_to_hype_ratio) /
           nextCount;
         existing.avgSlope =
           (existing.avgSlope * existing.count +
@@ -276,8 +322,26 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       }
     });
 
+    // If report loaded before cluster rows, fallback to parsedReport clusters
+    if (map.size === 0 && parsedReport) {
+      for (const c of parsedReport.clusters) {
+        map.set(c.clusterLabel, {
+          label: c.clusterLabel,
+          name: c.clusterName,
+          count: c.marketCount,
+          avgInterest: 0,
+          avgMedia: 0,
+          avgRatio: 0,
+          avgSlope: 0,
+          avgSentiment: 0,
+          keyInsightsSummary: c.keyInsightsSummary,
+          coreBusinessQuestion: c.coreBusinessQuestion,
+        });
+      }
+    }
+
     return Array.from(map.values()).sort((a, b) => a.label - b.label);
-  }, [baseDataset]);
+  }, [baseDataset, parsedReport]);
 
   const filteredRows = useMemo(() => {
     return activeDataset.filter((row) => {
@@ -302,6 +366,28 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       return true;
     });
   }, [activeDataset, countryFilter, categoryFilter, clusterFilter]);
+
+  // Determine if a specific cluster's report profile should be spotlighted
+  const spotlightClusterReport = useMemo(() => {
+    if (!parsedReport) return null;
+    if (clusterFilter !== 'all') {
+      const id = Number.parseInt(clusterFilter, 10);
+      return parsedReport.clusterMap[id] || null;
+    }
+    // If filtered rows all belong to a single cluster (e.g. when a Country + Category is chosen), spotlight that cluster!
+    if (filteredRows.length > 0) {
+      const uniqueLabels = new Set(
+        filteredRows
+          .map((r) => r.Cluster_Label)
+          .filter((l): l is number => typeof l === 'number')
+      );
+      if (uniqueLabels.size === 1) {
+        const singleLabel = Array.from(uniqueLabels)[0];
+        return parsedReport.clusterMap[singleLabel] || null;
+      }
+    }
+    return null;
+  }, [parsedReport, clusterFilter, filteredRows]);
 
   const handleExportCsv = () => {
     if (filteredRows.length === 0) return;
@@ -345,6 +431,26 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadMarkdownReport = () => {
+    if (!activeReport) return;
+    const blob = new Blob([activeReport.content], {
+      type: 'text/markdown;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `demandaura_${mode}_segmentation_report.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSyncWeeklyReports = async () => {
+    await Promise.all([
+      fetchLatestReports(),
+      onRefreshAll ? onRefreshAll() : Promise.resolve(),
+    ]);
+  };
+
   const isProcessing = clustersLoading || queryLoading;
 
   return (
@@ -353,7 +459,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-slate-200">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>Global Market Segmentation</span>
+            <span>Global Market Segmentation &amp; Weekly Cluster Reports</span>
             <span aria-hidden="true">·</span>
             <span>
               {mode === 'overall'
@@ -362,14 +468,16 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             </span>
           </div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-            Global Market Segmentation &amp; Executive Briefings
+            Global Market Segmentation &amp; Dynamic Weekly Cluster Reports
           </h1>
           <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
             Compare how all 42 country–category markets group together across{' '}
             <strong>multi-year long-term history</strong> versus the{' '}
-            <strong>most recent 4 weeks</strong>. Because market data refreshes
-            every week, segments adapt automatically to help you plan long-term
-            expansion and catch sudden short-term demand shifts early.
+            <strong>most recent 4 weeks</strong>. Every week, both the market
+            clusters and the executive cluster reports update automatically from
+            the backend pipeline—explaining each cluster&apos;s metric trends,
+            business interpretation, recommended use case, and core business
+            question answered.
           </p>
         </div>
 
@@ -418,18 +526,35 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         onRetry={() => handleExecuteSegmentationQuery()}
         modelLabel={
           mode === 'overall'
-            ? '3+ Year Market Segmentation'
-            : '4-Week Momentum Segmentation'
+            ? '3+ Year Market Segmentation & Report'
+            : '4-Week Momentum Segmentation & Report'
         }
       />
 
-      {/* Segment Summary Cards */}
+      {/* Dynamic Weekly Cluster Cards (Enriched with Live Report Insights) */}
       <div className="space-y-3">
-        <div className="text-xs font-semibold text-slate-900">
-          {mode === 'overall'
-            ? `Active Long-Term Market Groups (${clusterGroups.length} Discovered · Click a group to filter markets)`
-            : `Active 4-Week Momentum Profiles (${clusterGroups.length} Discovered · Click a profile to filter markets)`}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="text-xs font-semibold text-slate-900">
+            {mode === 'overall'
+              ? `Discovered Long-Term Market Clusters This Week (${clusterGroups.length} Active Groups · Click any cluster to inspect its weekly report & filter markets)`
+              : `Discovered 4-Week Momentum Clusters This Week (${clusterGroups.length} Active Profiles · Click any cluster to inspect its weekly report & filter markets)`}
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab(activeTab === 'report' ? 'table' : 'report')}
+            className="text-xs font-medium text-slate-700 hover:text-slate-900 underline inline-flex items-center gap-1 cursor-pointer self-start"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>
+              {activeTab === 'report'
+                ? 'Switch to Market Map & Table'
+                : `Read Full Weekly Cluster Report (${
+                    parsedReport?.clusters.length || clusterGroups.length
+                  } Clusters)`}
+            </span>
+          </button>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {clusterGroups.map((cg) => {
             const selected = clusterFilter === String(cg.label);
@@ -441,33 +566,47 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                 onClick={() =>
                   setClusterFilter(selected ? 'all' : String(cg.label))
                 }
-                className={`text-left p-4 rounded-xl border transition-colors cursor-pointer space-y-2 disabled:opacity-60 ${
+                className={`text-left p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between space-y-3 disabled:opacity-60 ${
                   selected
                     ? 'bg-slate-900 text-white border-slate-900'
                     : 'bg-white text-slate-900 border-slate-200 hover:border-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between text-xs font-mono-tabular">
-                  <span
-                    className={selected ? 'text-slate-300' : 'text-slate-500'}
-                  >
-                    Group {cg.label}
-                  </span>
-                  <span
-                    className={selected ? 'text-slate-300' : 'text-slate-500'}
-                  >
-                    {cg.count} {cg.count === 1 ? 'market' : 'markets'}
-                  </span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono-tabular">
+                    <span
+                      className={selected ? 'text-slate-300' : 'text-slate-500'}
+                    >
+                      Cluster {cg.label}
+                    </span>
+                    <span
+                      className={selected ? 'text-slate-300' : 'text-slate-500'}
+                    >
+                      {cg.count} {cg.count === 1 ? 'market' : 'markets'}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold leading-snug">
+                    {cg.name}
+                  </div>
+                  {cg.keyInsightsSummary && (
+                    <p
+                      className={`text-xs leading-relaxed line-clamp-2 ${
+                        selected ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    >
+                      {cg.keyInsightsSummary}
+                    </p>
+                  )}
                 </div>
-                <div className="text-sm font-semibold leading-snug">
-                  {cg.name}
-                </div>
+
                 <div
-                  className={`pt-1 grid grid-cols-2 gap-2 text-xs font-mono-tabular ${
-                    selected ? 'text-slate-300' : 'text-slate-600'
+                  className={`pt-2 border-t grid grid-cols-2 gap-2 text-xs font-mono-tabular ${
+                    selected
+                      ? 'border-slate-800 text-slate-300'
+                      : 'border-slate-100 text-slate-600'
                   }`}
                 >
-                  <div>Search Index: {cg.avgInterest.toFixed(1)}</div>
+                  <div>Search: {cg.avgInterest.toFixed(1)}</div>
                   <div>
                     Trend: {cg.avgSlope >= 0 ? '+' : ''}
                     {cg.avgSlope.toFixed(2)}
@@ -479,7 +618,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         </div>
       </div>
 
-      {/* Filter & Refresh Controls */}
+      {/* Filter & View Switcher Controls */}
       <form
         onSubmit={handleExecuteSegmentationQuery}
         className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
@@ -527,10 +666,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             aria-label="Filter by Market Segment"
             className="px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg disabled:bg-slate-50"
           >
-            <option value="all">All Market Groups</option>
+            <option value="all">All Market Clusters</option>
             {clusterGroups.map((cg) => (
               <option key={cg.label} value={String(cg.label)}>
-                Group {cg.label}: {cg.name}
+                Cluster {cg.label}: {cg.name} ({cg.count})
               </option>
             ))}
           </select>
@@ -565,7 +704,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
           >
             {queryLoading
-              ? `Updating Market View (${(elapsedMs / 1000).toFixed(1)}s)...`
+              ? `Syncing Weekly Data (${(elapsedMs / 1000).toFixed(1)}s)...`
               : 'Update Market View'}
           </button>
 
@@ -600,7 +739,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Executive Briefing
+              Weekly Cluster Report ({parsedReport?.clusters.length || clusterGroups.length})
             </button>
           </div>
         </div>
@@ -608,6 +747,90 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
 
       {activeTab === 'table' ? (
         <div className="space-y-8">
+          {/* Dynamic Weekly Report Spotlight when a cluster or single-cluster market is selected */}
+          {spotlightClusterReport && (
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span>Live Weekly Cluster Report Intelligence</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="font-mono-tabular">
+                      Cluster #{spotlightClusterReport.clusterLabel} (
+                      {spotlightClusterReport.recordCountText})
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    Cluster {spotlightClusterReport.clusterLabel}:{' '}
+                    {spotlightClusterReport.clusterName}
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('report')}
+                    className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                  >
+                    Open Full Weekly Report
+                  </button>
+                  {clusterFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => setClusterFilter('all')}
+                      className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer whitespace-nowrap"
+                    >
+                      Show All Clusters
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {spotlightClusterReport.coreBusinessQuestion && (
+                <div className="border-l-2 border-slate-900 pl-4 py-1 bg-slate-50/70 rounded-r-lg">
+                  <div className="text-xs font-semibold text-slate-900">
+                    Core Business Question Answered by This Cluster:
+                  </div>
+                  <p className="text-sm text-slate-700 italic">
+                    &ldquo;{spotlightClusterReport.coreBusinessQuestion}&rdquo;
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                  <div className="font-semibold text-slate-900">
+                    Metric Trends &amp; Summary
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    {spotlightClusterReport.metricTrends ||
+                      spotlightClusterReport.keyInsightsSummary}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                  <div className="font-semibold text-slate-900">
+                    Business Interpretation
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    {spotlightClusterReport.businessInterpretation ||
+                      spotlightClusterReport.keyInsightsSummary}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                  <div className="font-semibold text-slate-900">
+                    Recommended Business Use Case
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">
+                    {spotlightClusterReport.businessUseCase ||
+                      'Tailor marketing and inventory strategy to match this cluster profile.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Scatter Visualization */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -659,16 +882,28 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     content={({ active, payload }) => {
                       if (!active || !payload || !payload.length) return null;
                       const rec = payload[0].payload as SegmentationRecord;
+                      const repInfo =
+                        typeof rec.Cluster_Label === 'number'
+                          ? parsedReport?.clusterMap[rec.Cluster_Label]
+                          : undefined;
                       return (
-                        <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1 shadow-lg">
+                        <div className="bg-slate-900 text-white p-3.5 rounded-lg text-xs space-y-1.5 shadow-lg max-w-xs">
                           <div className="font-semibold">
                             {formatEntityLabel(rec.country_name)} ·{' '}
                             {formatEntityLabel(rec.category)}
                           </div>
-                          <div className="text-slate-300">
-                            {rec.Cluster_Name || `Group ${rec.Cluster_Label}`}
+                          <div className="text-slate-300 font-medium">
+                            Cluster #{rec.Cluster_Label}:{' '}
+                            {repInfo?.clusterName ||
+                              rec.Cluster_Name ||
+                              `Group ${rec.Cluster_Label}`}
                           </div>
-                          <div className="font-mono-tabular pt-1 space-y-0.5">
+                          {repInfo?.keyInsightsSummary && (
+                            <div className="text-slate-400 leading-snug">
+                              {repInfo.keyInsightsSummary}
+                            </div>
+                          )}
+                          <div className="font-mono-tabular pt-1 border-t border-slate-800 space-y-0.5">
                             <div>
                               Search Interest:{' '}
                               {rec.mean_search_interest.toFixed(2)}
@@ -709,8 +944,8 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
               </h3>
               <span className="text-xs text-slate-500">
                 {mode === 'overall'
-                  ? '3+ Year Historical Averages'
-                  : 'Most Recent 4-Week Averages'}
+                  ? '3+ Year Historical Averages · Click any Cluster to view report insights'
+                  : 'Most Recent 4-Week Averages · Click any Cluster to view report insights'}
               </span>
             </div>
 
@@ -731,7 +966,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                       <th className="py-3 px-4 font-medium">Country</th>
                       <th className="py-3 px-4 font-medium">Category</th>
                       <th className="py-3 px-4 font-medium">
-                        Assigned Market Group
+                        Assigned Cluster (Weekly Report)
                       </th>
                       <th className="py-3 px-4 font-medium text-right">
                         Avg Search Interest
@@ -754,55 +989,77 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredRows.map((row) => (
-                      <tr
-                        key={`${row.country_name}-${row.category}`}
-                        className="hover:bg-slate-50"
-                      >
-                        <td className="py-2.5 px-4 font-medium text-slate-900 whitespace-nowrap">
-                          {formatEntityLabel(row.country_name)}
-                        </td>
-                        <td className="py-2.5 px-4 text-slate-600 whitespace-nowrap">
-                          {formatEntityLabel(row.category)}
-                        </td>
-                        <td className="py-2.5 px-4 text-slate-800 whitespace-nowrap">
-                          <span className="font-mono-tabular text-slate-400 mr-1.5">
-                            #{row.Cluster_Label ?? '-'}
-                          </span>
-                          <span className="font-medium">
-                            {row.Cluster_Name || 'Unassigned'}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900">
-                          {row.mean_search_interest.toFixed(2)}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
-                          {row.mean_media_volume.toFixed(2)}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900 font-semibold">
-                          {row.mean_demand_to_hype_ratio.toFixed(2)}
-                        </td>
-                        <td
-                          className={`py-2.5 px-4 text-right font-mono-tabular font-medium ${
-                            row.search_interest_trend_slope >= 0
-                              ? 'text-emerald-700'
-                              : 'text-amber-700'
-                          }`}
+                    {filteredRows.map((row) => {
+                      const clusterId = row.Cluster_Label ?? -1;
+                      const repCluster = parsedReport?.clusterMap[clusterId];
+                      return (
+                        <tr
+                          key={`${row.country_name}-${row.category}`}
+                          className="hover:bg-slate-50"
                         >
-                          {row.search_interest_trend_slope >= 0 ? '+' : ''}
-                          {row.search_interest_trend_slope.toFixed(3)}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
-                          {row.mean_net_sentiment.toFixed(2)}
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
-                          $
-                          {row.mean_gdp_per_capita.toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="py-2.5 px-4 font-medium text-slate-900 whitespace-nowrap">
+                            {formatEntityLabel(row.country_name)}
+                          </td>
+                          <td className="py-2.5 px-4 text-slate-600 whitespace-nowrap">
+                            {formatEntityLabel(row.category)}
+                          </td>
+                          <td className="py-2.5 px-4 text-slate-800 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setClusterFilter(
+                                  clusterFilter === String(clusterId)
+                                    ? 'all'
+                                    : String(clusterId)
+                                )
+                              }
+                              className="text-left hover:underline cursor-pointer"
+                              title={
+                                repCluster?.keyInsightsSummary ||
+                                'Click to filter and view weekly report for this cluster'
+                              }
+                            >
+                              <span className="font-mono-tabular text-slate-400 mr-1.5">
+                                #{row.Cluster_Label ?? '-'}
+                              </span>
+                              <span className="font-medium text-slate-900">
+                                {repCluster?.clusterName ||
+                                  row.Cluster_Name ||
+                                  'Unassigned'}
+                              </span>
+                            </button>
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900">
+                            {row.mean_search_interest.toFixed(2)}
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
+                            {row.mean_media_volume.toFixed(2)}
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900 font-semibold">
+                            {row.mean_demand_to_hype_ratio.toFixed(2)}
+                          </td>
+                          <td
+                            className={`py-2.5 px-4 text-right font-mono-tabular font-medium ${
+                              row.search_interest_trend_slope >= 0
+                                ? 'text-emerald-700'
+                                : 'text-amber-700'
+                            }`}
+                          >
+                            {row.search_interest_trend_slope >= 0 ? '+' : ''}
+                            {row.search_interest_trend_slope.toFixed(3)}
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
+                            {row.mean_net_sentiment.toFixed(2)}
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-700">
+                            $
+                            {row.mean_gdp_per_capita.toLocaleString(undefined, {
+                              maximumFractionDigits: 0,
+                            })}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -810,39 +1067,341 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
           </div>
         </div>
       ) : (
-        /* Executive Briefing Tab */
-        <div className="bg-white border border-slate-200 rounded-xl p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
-            <div>
-              <div className="text-xs text-slate-500">
-                Strategic Executive Briefing
+        /* Dynamic Weekly Cluster Report Tab (Parsed Live from Backend Report API) */
+        <div className="space-y-8">
+          {/* Report Header & Sync Controls */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span>Live Weekly Backend Report</span>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {mode === 'overall'
+                    ? 'Source: /reports/market-segmentation'
+                    : 'Source: /reports/4-weeks-segmentation'}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>Dynamically Updated Every Week</span>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                {mode === 'overall'
-                  ? '3+ Year Long-Term Market Segmentation Report'
-                  : 'Recent 4-Week Market Momentum Report'}
+              <h2 className="text-xl font-semibold text-slate-900">
+                {parsedReport?.reportTitle ||
+                  (mode === 'overall'
+                    ? 'Overall Market Segmentation Report (3+ Years)'
+                    : '4-Week Market Segmentation Report')}
               </h2>
+              <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+                This report is generated by the backend clustering pipeline and
+                parsed dynamically every week. As consumer search interest,
+                media volume, and sentiment shift, the number of clusters,
+                recommended cluster names, metric trends, and business use cases
+                automatically update here.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                disabled={reportLoading}
+                onClick={handleSyncWeeklyReports}
+                className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${
+                    reportLoading ? 'animate-spin' : ''
+                  }`}
+                />
+                <span>Sync Latest Weekly Report</span>
+              </button>
+
+              {activeReport && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleDownloadMarkdownReport}
+                    className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download .md</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowRawMarkdown((prev) => !prev)}
+                    className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    {showRawMarkdown
+                      ? 'View Structured Report'
+                      : 'View Raw Markdown'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {reportLoading ? (
-            <div className="space-y-3">
+            <div className="bg-white border border-slate-200 rounded-xl p-8 space-y-4">
               <div className="h-6 w-64 bg-slate-100 rounded animate-pulse" />
-              <div className="h-40 w-full bg-slate-100 rounded animate-pulse" />
+              <div className="h-32 w-full bg-slate-100 rounded animate-pulse" />
+              <div className="h-48 w-full bg-slate-100 rounded animate-pulse" />
             </div>
           ) : reportError ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
-              {reportError}
+            <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 space-y-3">
+              <div className="font-semibold">
+                Unable to load weekly segmentation report
+              </div>
+              <div>{reportError}</div>
+              <button
+                type="button"
+                onClick={handleSyncWeeklyReports}
+                className="px-3 py-1.5 bg-red-900 text-white rounded-md font-medium cursor-pointer"
+              >
+                Retry Loading Report
+              </button>
             </div>
-          ) : activeReport ? (
-            <div className="prose prose-slate max-w-none">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-xl border border-slate-200 overflow-x-auto">
+          ) : !activeReport || !parsedReport ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-8 text-xs text-slate-500">
+              No weekly segmentation report available yet.
+            </div>
+          ) : showRawMarkdown ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
+              <div className="text-xs font-semibold text-slate-900">
+                Raw Markdown Content ({activeReport.report_title})
+              </div>
+              <pre className="whitespace-pre-wrap font-mono text-xs text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-xl border border-slate-200 overflow-x-auto">
                 {activeReport.content}
               </pre>
             </div>
           ) : (
-            <div className="text-xs text-slate-500">
-              No executive briefing loaded.
+            <div className="space-y-8">
+              {/* SECTION 1: SUMMARY TABLE (Dynamically parsed from report) */}
+              {parsedReport.summaryRows.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs text-slate-500">
+                        Section 1 · Weekly Executive Summary Table
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        Discovered Clusters Overview ({parsedReport.summaryRows.length}{' '}
+                        Clusters in Current Weekly Run)
+                      </h3>
+                    </div>
+                    <span className="text-xs text-slate-500">
+                      Click &ldquo;Filter Markets&rdquo; to inspect any cluster on
+                      the Market Map
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
+                          <th className="py-3 px-4 font-medium whitespace-nowrap">
+                            Cluster ID
+                          </th>
+                          <th className="py-3 px-4 font-medium whitespace-nowrap">
+                            Market Count
+                          </th>
+                          <th className="py-3 px-4 font-medium whitespace-nowrap">
+                            Recommended Cluster Name
+                          </th>
+                          <th className="py-3 px-4 font-medium">
+                            Key Insights Summary (From Weekly Report)
+                          </th>
+                          <th className="py-3 px-4 font-medium text-right whitespace-nowrap">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {parsedReport.summaryRows.map((row) => (
+                          <tr
+                            key={row.clusterLabel}
+                            className="hover:bg-slate-50"
+                          >
+                            <td className="py-3 px-4 font-mono-tabular font-semibold text-slate-900 whitespace-nowrap">
+                              Cluster #{row.clusterLabel}
+                            </td>
+                            <td className="py-3 px-4 font-mono-tabular text-slate-700 whitespace-nowrap">
+                              {row.marketCount}{' '}
+                              {row.marketCount === 1 ? 'market' : 'markets'}
+                            </td>
+                            <td className="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap">
+                              {row.clusterName}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 leading-relaxed">
+                              {row.keyInsightsSummary}
+                            </td>
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setClusterFilter(String(row.clusterLabel));
+                                  setActiveTab('table');
+                                }}
+                                className="px-2.5 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md hover:bg-slate-100 cursor-pointer"
+                              >
+                                Filter Markets
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 2: DETAILED CLUSTER BREAKDOWN (Dynamically parsed for each cluster) */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <div className="text-xs text-slate-500">
+                    Section 2 · Detailed Cluster-by-Cluster Breakdown
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    Strategic Interpretation, Metric Trends &amp; Business Use
+                    Cases
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                  {parsedReport.clusters.map((cluster) => (
+                    <div
+                      key={cluster.clusterLabel}
+                      className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-xs text-slate-500 font-mono-tabular">
+                            <span>Cluster #{cluster.clusterLabel}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>
+                              Record Count: {cluster.recordCountText}
+                            </span>
+                          </div>
+                          <h4 className="text-lg font-semibold text-slate-900">
+                            Cluster {cluster.clusterLabel}:{' '}
+                            {cluster.clusterName}
+                          </h4>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClusterFilter(String(cluster.clusterLabel));
+                            setActiveTab('table');
+                          }}
+                          className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 cursor-pointer whitespace-nowrap self-start"
+                        >
+                          View {cluster.marketCount}{' '}
+                          {cluster.marketCount === 1 ? 'Market' : 'Markets'} on
+                          Map
+                        </button>
+                      </div>
+
+                      {/* Core Business Question Answered Callout */}
+                      {cluster.coreBusinessQuestion && (
+                        <div className="border-l-2 border-slate-900 pl-4 py-1.5 bg-slate-50/70 rounded-r-lg space-y-0.5">
+                          <div className="text-xs font-semibold text-slate-900">
+                            Core Business Question Answered:
+                          </div>
+                          <p className="text-sm text-slate-800 italic">
+                            &ldquo;{cluster.coreBusinessQuestion}&rdquo;
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 3-Column Breakdown: Metric Trends, Business Interpretation, Business Use Case */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                          <div className="font-semibold text-slate-900">
+                            Metric Trends
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {cluster.metricTrends || cluster.keyInsightsSummary}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                          <div className="font-semibold text-slate-900">
+                            Business Interpretation
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {cluster.businessInterpretation ||
+                              cluster.keyInsightsSummary}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                          <div className="font-semibold text-slate-900">
+                            Recommended Business Use Case
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {cluster.businessUseCase ||
+                              cluster.keyInsightsSummary}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Render any additional dynamic bullets if added in future weekly reports */}
+                      {cluster.additionalBullets.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                          {cluster.additionalBullets.map((b) => (
+                            <div
+                              key={b.label}
+                              className="p-3 bg-slate-50 border border-slate-100 rounded-lg"
+                            >
+                              <span className="font-semibold text-slate-900">
+                                {b.label}:{' '}
+                              </span>
+                              <span className="text-slate-600">{b.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Assigned Markets in This Cluster (Dynamically matched from weekly data) */}
+                      {cluster.markets.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100 space-y-2">
+                          <div className="text-xs font-semibold text-slate-900">
+                            Assigned Country–Category Markets This Week (
+                            {cluster.markets.length}):
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {cluster.markets.map((m) => (
+                              <button
+                                key={`${m.country_name}-${m.category}`}
+                                type="button"
+                                onClick={() => {
+                                  setCountryFilter(
+                                    m.country_name as CanonicalCountry
+                                  );
+                                  setCategoryFilter(
+                                    m.category as CanonicalCategory
+                                  );
+                                  setClusterFilter('all');
+                                  setActiveTab('table');
+                                }}
+                                className="px-2.5 py-1 text-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-md transition-colors cursor-pointer"
+                                title={`Search Interest: ${m.mean_search_interest.toFixed(
+                                  1
+                                )} | Demand Trend: ${
+                                  m.search_interest_trend_slope >= 0 ? '+' : ''
+                                }${m.search_interest_trend_slope.toFixed(2)}`}
+                              >
+                                <span className="font-medium text-slate-900">
+                                  {formatEntityLabel(m.country_name)}
+                                </span>{' '}
+                                · {formatEntityLabel(m.category)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

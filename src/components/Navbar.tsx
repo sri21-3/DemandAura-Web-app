@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AppPage } from '../types/models';
+import { DemandAuraLogo } from './DemandAuraLogo';
 
 interface NavbarProps {
   currentPage: AppPage;
@@ -34,13 +35,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
       <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Zone 1: Single text element wordmark */}
+        {/* Zone 1: Brand Logo & Wordmark */}
         <button
           type="button"
           onClick={() => handleNav('home')}
-          className="text-xl font-semibold tracking-tight text-slate-900 hover:text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+          className="inline-flex items-center gap-2.5 text-xl font-semibold tracking-tight text-slate-900 hover:text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
         >
-          DemandAura
+          <DemandAuraLogo size={34} />
+          <span>DemandAura</span>
         </button>
 
         {/* Zone 2: Clean text navigation links */}

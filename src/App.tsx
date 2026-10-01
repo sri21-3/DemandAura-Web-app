@@ -21,6 +21,7 @@ import { nexusDemandApi } from './services/nexusDemandApi';
 import {
   AppPage,
   HealthResponse,
+  MarkdownReportResponse,
   SegmentationRecord,
 } from './types/models';
 
@@ -37,6 +38,13 @@ function AppShell() {
     SegmentationRecord[]
   >([]);
   const [clustersLoading, setClustersLoading] = useState(true);
+
+  const [overallReport, setOverallReport] =
+    useState<MarkdownReportResponse | null>(null);
+  const [fourWeekReport, setFourWeekReport] =
+    useState<MarkdownReportResponse | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportsError, setReportsError] = useState<string | null>(null);
 
   const checkBackendHealth = useCallback(async () => {
     setHealthLoading(true);
@@ -71,10 +79,32 @@ function AppShell() {
     }
   }, []);
 
+  const loadClusterReports = useCallback(async () => {
+    setReportsLoading(true);
+    setReportsError(null);
+    try {
+      const [repOverall, rep4W] = await Promise.all([
+        nexusDemandApi.getMarketSegmentationReport(),
+        nexusDemandApi.get4WeeksSegmentationReport(),
+      ]);
+      setOverallReport(repOverall);
+      setFourWeekReport(rep4W);
+    } catch (err: unknown) {
+      setReportsError(
+        err instanceof Error
+          ? err.message
+          : 'Failed loading weekly cluster reports from backend.'
+      );
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     checkBackendHealth();
     loadClusterTables();
-  }, [checkBackendHealth, loadClusterTables]);
+    loadClusterReports();
+  }, [checkBackendHealth, loadClusterTables, loadClusterReports]);
 
   const handleNavigate = (page: AppPage) => {
     setCurrentPage(page);
@@ -108,10 +138,14 @@ function AppShell() {
               onRefreshHealth={() => {
                 checkBackendHealth();
                 loadClusterTables();
+                loadClusterReports();
               }}
               overallClusters={overallClusters}
               fourWeekClusters={fourWeekClusters}
               clustersLoading={clustersLoading}
+              overallReport={overallReport}
+              fourWeekReport={fourWeekReport}
+              reportsLoading={reportsLoading}
             />
           </ProtectedRoute>
         )}
@@ -125,6 +159,8 @@ function AppShell() {
             <DivergencePage
               overallClusters={overallClusters}
               fourWeekClusters={fourWeekClusters}
+              overallReport={overallReport}
+              fourWeekReport={fourWeekReport}
             />
           </ProtectedRoute>
         )}
@@ -149,6 +185,13 @@ function AppShell() {
               overallClusters={overallClusters}
               fourWeekClusters={fourWeekClusters}
               clustersLoading={clustersLoading}
+              overallReport={overallReport}
+              fourWeekReport={fourWeekReport}
+              reportsLoading={reportsLoading}
+              reportsError={reportsError}
+              onRefreshAll={async () => {
+                await Promise.all([loadClusterTables(), loadClusterReports()]);
+              }}
             />
           </ProtectedRoute>
         )}

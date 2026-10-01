@@ -4,6 +4,7 @@ import categoryFashionBeauty from '../assets/images/category_fashion_beauty_1790
 import categoryFitnessWearables from '../assets/images/category_fitness_wearables_1790750714853.jpg';
 import categoryNutritionDiets from '../assets/images/category_nutrition_diets_1790750728244.jpg';
 import heroImage from '../assets/images/hero_market_foresight_1790705585148.jpg';
+import { DemandAuraLogo } from '../components/DemandAuraLogo';
 import { VALID_CATEGORIES, VALID_COUNTRIES } from '../config/api';
 import { AppPage, CanonicalCategory, HealthResponse } from '../types/models';
 
@@ -35,9 +36,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white leading-[1.08]">
-                DemandAura
-              </h1>
+              <div className="flex items-center gap-4">
+                <DemandAuraLogo size={56} className="rounded-full shadow-lg" />
+                <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white leading-[1.08]">
+                  DemandAura
+                </h1>
+              </div>
               <p
                 className="text-xl sm:text-2xl font-medium text-slate-200 tracking-tight"
                 style={{ textWrap: 'balance' }}
@@ -87,13 +91,16 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent flex items-end p-5">
-                <div className="space-y-1">
-                  <div className="text-xs text-slate-200 font-medium">
-                    DemandAura Global Market Foresight
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    Weekly Updated Signals Across 14 Countries &amp; 3 Consumer
-                    Verticals
+                <div className="flex items-center gap-3">
+                  <DemandAuraLogo size={32} />
+                  <div className="space-y-0.5">
+                    <div className="text-xs text-slate-200 font-medium">
+                      DemandAura Global Market Foresight
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      Weekly Updated Signals Across 14 Countries &amp; 3 Consumer
+                      Verticals
+                    </div>
                   </div>
                 </div>
               </div>

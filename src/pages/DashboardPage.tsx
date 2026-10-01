@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowRight, RefreshCw } from 'lucide-react';
 import { formatEntityLabel } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import {
   AppPage,
   HealthResponse,
+  MarkdownReportResponse,
   SegmentationRecord,
 } from '../types/models';
+import { parseSegmentationReport } from '../utils/reportParser';
 
 interface DashboardPageProps {
   onNavigate: (page: AppPage) => void;
@@ -17,6 +19,9 @@ interface DashboardPageProps {
   overallClusters: SegmentationRecord[];
   fourWeekClusters: SegmentationRecord[];
   clustersLoading: boolean;
+  overallReport?: MarkdownReportResponse | null;
+  fourWeekReport?: MarkdownReportResponse | null;
+  reportsLoading?: boolean;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
@@ -28,8 +33,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   overallClusters,
   fourWeekClusters,
   clustersLoading,
+  overallReport = null,
+  fourWeekReport = null,
+  reportsLoading = false,
 }) => {
   const { user, profile, predictions } = useAuth();
+  const [reportHorizon, setReportHorizon] = useState<'overall' | '4w'>('4w');
+
+  const parsedOverallReport = useMemo(
+    () => parseSegmentationReport(overallReport, overallClusters),
+    [overallReport, overallClusters]
+  );
+
+  const parsed4WReport = useMemo(
+    () => parseSegmentationReport(fourWeekReport, fourWeekClusters),
+    [fourWeekReport, fourWeekClusters]
+  );
+
+  const activeDashboardReport =
+    reportHorizon === 'overall' ? parsedOverallReport : parsed4WReport;
 
   // Identify top momentum markets from 4-week segmentation
   const topMomentum4W = [...fourWeekClusters]
@@ -350,6 +372,116 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Dynamic Weekly Cluster Report Highlights */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+          <div className="space-y-1">
+            <div className="text-xs text-slate-500">
+              Live Weekly Backend Report · Updated Automatically Every Week
+            </div>
+            <h2 className="text-base font-semibold text-slate-900">
+              Weekly Cluster Report Intelligence (
+              {activeDashboardReport
+                ? `${activeDashboardReport.clusters.length} Discovered Clusters`
+                : 'Loading Report...'}
+              )
+            </h2>
+            <p className="text-xs text-slate-500">
+              Directly parsed from the weekly clustering reports—highlighting
+              each discovered cluster&apos;s key insights, business use case,
+              and core commercial question answered.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 self-start">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setReportHorizon('4w')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  reportHorizon === '4w'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Last 4 Weeks Report
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportHorizon('overall')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                  reportHorizon === 'overall'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                3+ Year Report
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('segmentation')}
+              className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              Open Full Cluster Report
+            </button>
+          </div>
+        </div>
+
+        {reportsLoading && !activeDashboardReport ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="h-36 bg-slate-100 rounded-xl animate-pulse"
+              />
+            ))}
+          </div>
+        ) : activeDashboardReport ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeDashboardReport.clusters.map((cluster) => (
+              <div
+                key={cluster.clusterLabel}
+                className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-mono-tabular">
+                    <span>Cluster #{cluster.clusterLabel}</span>
+                    <span>
+                      {cluster.marketCount}{' '}
+                      {cluster.marketCount === 1 ? 'market' : 'markets'}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    {cluster.clusterName}
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {cluster.keyInsightsSummary}
+                  </p>
+                  {cluster.businessUseCase && (
+                    <div className="pt-1 text-xs text-slate-700 leading-relaxed">
+                      <strong className="text-slate-900">Use Case:</strong>{' '}
+                      {cluster.businessUseCase}
+                    </div>
+                  )}
+                </div>
+
+                {cluster.coreBusinessQuestion && (
+                  <div className="pt-2 border-t border-slate-200/80 text-xs text-slate-600 italic">
+                    &ldquo;{cluster.coreBusinessQuestion}&rdquo;
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-slate-500">
+            Weekly cluster report is syncing from backend...
+          </div>
+        )}
       </div>
 
       {/* Recent User Prediction & Query History Preview */}

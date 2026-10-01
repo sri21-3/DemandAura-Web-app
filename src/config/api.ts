@@ -493,12 +493,11 @@ export const MODEL_SPECIFICATIONS = {
     endpoint: API_ENDPOINTS.CLUSTERS_MARKET_SEGMENTATION,
     reportEndpoint: API_ENDPOINTS.REPORTS_MARKET_SEGMENTATION,
     method: 'GET',
-    algorithm: '3+ Year Structural Market Grouping (4 Strategic Groups)',
+    algorithm: 'Multi-Year Structural Market Grouping (Updated Weekly)',
     metrics: {
       silhouetteScore: 0.24,
       daviesBouldinIndex: 1.076,
       totalMarkets: 42,
-      clustersCount: 4,
     },
     features: [
       'mean_search_interest',
@@ -514,12 +513,11 @@ export const MODEL_SPECIFICATIONS = {
     endpoint: API_ENDPOINTS.CLUSTERS_4W_SEGMENTATION,
     reportEndpoint: API_ENDPOINTS.REPORTS_4W_SEGMENTATION,
     method: 'GET',
-    algorithm: '4-Week Rolling Momentum Grouping (7 Dynamic Profiles)',
+    algorithm: '4-Week Rolling Momentum Grouping (Updated Weekly)',
     metrics: {
       silhouetteScore: 0.359,
       daviesBouldinIndex: 0.798,
       totalMarkets: 42,
-      clustersCount: 7,
     },
     features: [
       'mean_search_interest',

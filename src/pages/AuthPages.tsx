@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { DemandAuraLogo } from '../components/DemandAuraLogo';
 import {
   formatEntityLabel,
   VALID_CATEGORIES,
@@ -157,6 +158,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
     <div className="max-w-lg mx-auto px-6 py-12">
       <div className="bg-white border border-slate-200 rounded-xl p-8 space-y-6">
         <div className="space-y-2 text-center">
+          <div className="flex justify-center pb-1">
+            <DemandAuraLogo size={48} />
+          </div>
           <div className="text-xs text-slate-500">
             DemandAura Identity &amp; Workspace Access
           </div>

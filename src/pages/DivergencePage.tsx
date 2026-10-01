@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   PipelineErrorState,
   PipelineFlowStatus,
@@ -23,18 +23,24 @@ import {
   CanonicalCategory,
   CanonicalCountry,
   DivergenceResponse,
+  MarkdownReportResponse,
   PipelineExecutionMeta,
   SegmentationRecord,
 } from '../types/models';
+import { parseSegmentationReport } from '../utils/reportParser';
 
 interface DivergencePageProps {
   overallClusters: SegmentationRecord[];
   fourWeekClusters: SegmentationRecord[];
+  overallReport?: MarkdownReportResponse | null;
+  fourWeekReport?: MarkdownReportResponse | null;
 }
 
 export const DivergencePage: React.FC<DivergencePageProps> = ({
   overallClusters,
   fourWeekClusters,
+  overallReport = null,
+  fourWeekReport = null,
 }) => {
   const { profile, logPrediction } = useAuth();
 
@@ -182,6 +188,26 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
       c.country_name.toLowerCase() === activeCountry.toLowerCase() &&
       c.category.toLowerCase() === activeCategory.toLowerCase()
   );
+
+  const parsedOverallReport = useMemo(
+    () => parseSegmentationReport(overallReport, overallClusters),
+    [overallReport, overallClusters]
+  );
+
+  const parsed4WReport = useMemo(
+    () => parseSegmentationReport(fourWeekReport, fourWeekClusters),
+    [fourWeekReport, fourWeekClusters]
+  );
+
+  const matchedOverallReportCluster =
+    typeof matchedOverall?.Cluster_Label === 'number'
+      ? parsedOverallReport?.clusterMap[matchedOverall.Cluster_Label]
+      : undefined;
+
+  const matched4WReportCluster =
+    typeof matched4W?.Cluster_Label === 'number'
+      ? parsed4WReport?.clusterMap[matched4W.Cluster_Label]
+      : undefined;
 
   // Compute gauge percentage across observed historical range [-0.5514, +1.0]
   const minRange = MODEL_SPECIFICATIONS.divergence.metrics.targetRange[0];
@@ -566,7 +592,8 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
                       <span>
                         3+ Year Market Group:{' '}
                         <strong className="text-slate-900">
-                          {matchedOverall.Cluster_Name}
+                          {matchedOverallReportCluster?.clusterName ||
+                            matchedOverall.Cluster_Name}
                         </strong>
                       </span>
                     )}
@@ -576,12 +603,58 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
                         <span>
                           Recent 4-Week Profile:{' '}
                           <strong className="text-slate-900">
-                            {matched4W.Cluster_Name}
+                            {matched4WReportCluster?.clusterName ||
+                              matched4W.Cluster_Name}
                           </strong>
                         </span>
                       </>
                     )}
                   </div>
+
+                  {/* Weekly Report Insights for This Market's Assigned Clusters */}
+                  {(matchedOverallReportCluster || matched4WReportCluster) && (
+                    <div className="pt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {matchedOverallReportCluster && (
+                        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+                          <div className="font-semibold text-slate-900">
+                            3+ Year Report Insight (Cluster #
+                            {matchedOverallReportCluster.clusterLabel}:{' '}
+                            {matchedOverallReportCluster.clusterName})
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {matchedOverallReportCluster.businessInterpretation ||
+                              matchedOverallReportCluster.keyInsightsSummary}
+                          </p>
+                          {matchedOverallReportCluster.businessUseCase && (
+                            <p className="text-slate-700 leading-relaxed">
+                              <strong>Use Case:</strong>{' '}
+                              {matchedOverallReportCluster.businessUseCase}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {matched4WReportCluster && (
+                        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+                          <div className="font-semibold text-slate-900">
+                            4-Week Report Insight (Cluster #
+                            {matched4WReportCluster.clusterLabel}:{' '}
+                            {matched4WReportCluster.clusterName})
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {matched4WReportCluster.businessInterpretation ||
+                              matched4WReportCluster.keyInsightsSummary}
+                          </p>
+                          {matched4WReportCluster.businessUseCase && (
+                            <p className="text-slate-700 leading-relaxed">
+                              <strong>Use Case:</strong>{' '}
+                              {matched4WReportCluster.businessUseCase}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { DEVELOPER_INFO } from '../config/api';
 import { AppPage } from '../types/models';
+import { DemandAuraLogo } from './DemandAuraLogo';
 
 interface FooterProps {
   onNavigate: (page: AppPage) => void;
@@ -12,9 +13,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
       <div className="max-w-[1400px] mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
           <div className="md:col-span-1 space-y-3">
-            <div className="text-lg font-semibold tracking-tight text-slate-900">
-              DemandAura
-            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('home')}
+              className="inline-flex items-center gap-2.5 text-lg font-semibold tracking-tight text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <DemandAuraLogo size={32} />
+              <span>DemandAura</span>
+            </button>
             <p className="text-xs text-slate-500 leading-relaxed">
               Sense the Future of Global Consumer Demand. Uncover genuine market
               interest, filter out passing hype, and forecast 4-week demand

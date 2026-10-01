@@ -1,5 +1,6 @@
 import React from 'react';
 import aboutImage from '../assets/images/about_pipeline_architecture_1790705597994.jpg';
+import { DemandAuraLogo } from '../components/DemandAuraLogo';
 import {
   DEVELOPER_INFO,
   FEATURE_DESCRIPTIONS,
@@ -17,8 +18,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
       {/* Hero Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pb-12 border-b border-slate-200">
         <div className="lg:col-span-7 space-y-4">
-          <div className="text-xs text-slate-500">
-            Platform Overview · Keyword Coverage · Commercial Decision Guide
+          <div className="inline-flex items-center gap-2.5 text-xs text-slate-500">
+            <DemandAuraLogo size={28} />
+            <span>
+              DemandAura · Platform Overview · Keyword Coverage · Decision Guide
+            </span>
           </div>
           <h1
             className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight"
