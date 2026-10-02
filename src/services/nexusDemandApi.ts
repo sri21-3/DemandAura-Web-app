@@ -374,6 +374,10 @@ function validateHealthResponse(
   };
 }
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function requestMlApi<T>(
   endpointPath: string,
   options: RequestInit = {},
@@ -385,109 +389,144 @@ async function requestMlApi<T>(
   }
 ): Promise<T> {
   const proxyUrl = `/api/ml${endpointPath}`;
+  const directUrl = `${API_BASE_URL}${endpointPath}`;
   const startTime = performance.now();
 
-  let response: Response;
-  try {
-    response = await fetch(proxyUrl, {
-      ...options,
-      headers: {
-        Accept: 'application/json',
-        'x-upstream-api-base': API_BASE_URL,
-        ...(options.headers || {}),
-      },
-    });
-  } catch (networkErr: unknown) {
-    const msg =
-      networkErr instanceof Error
-        ? networkErr.message
-        : 'Network request failed while contacting the ML backend.';
-    throw new MlPipelineError(
-      'network_error',
-      `Network error while connecting to ${API_BASE_URL}${endpointPath}: ${msg}`,
-      endpointPath
-    );
-  }
+  let lastError: MlPipelineError | null = null;
 
-  const durationMs = Math.round(performance.now() - startTime);
+  // Try proxy first, then retry with direct upstream fallback if proxy returns non-JSON or 502/503/504
+  const candidateUrls = [proxyUrl, directUrl, proxyUrl];
 
-  if (!response.ok) {
-    let errorDetail = `HTTP ${response.status} (${response.statusText})`;
+  for (let attempt = 0; attempt < candidateUrls.length; attempt++) {
+    const targetUrl = candidateUrls[attempt];
+    const isDirect = targetUrl.startsWith('http');
+
+    let response: Response;
     try {
-      const errJson = await response.json();
-      if (typeof errJson?.detail === 'string') {
-        errorDetail = errJson.detail;
-      } else if (Array.isArray(errJson?.detail)) {
-        errorDetail = errJson.detail
-          .map((d: { msg?: string; loc?: unknown[] }) => {
-            const field = Array.isArray(d.loc) ? d.loc.join('.') : '';
-            return field ? `${field}: ${d.msg}` : d.msg || JSON.stringify(d);
-          })
-          .join('; ');
-      }
-    } catch {
-      // Fallback if error body is not JSON
-    }
-
-    // Classify HTTP error into validation_error, network_error, or backend_error
-    if (response.status === 422) {
-      throw new MlPipelineError(
-        'validation_error',
-        `Schema validation rejected by FastAPI (HTTP 422): ${errorDetail}`,
-        endpointPath,
-        422
-      );
-    }
-
-    if (
-      response.status === 502 ||
-      response.status === 503 ||
-      response.status === 504
-    ) {
-      throw new MlPipelineError(
+      response = await fetch(targetUrl, {
+        ...options,
+        headers: {
+          Accept: 'application/json',
+          ...(!isDirect ? { 'x-upstream-api-base': API_BASE_URL } : {}),
+          ...(options.headers || {}),
+        },
+      });
+    } catch (networkErr: unknown) {
+      const msg =
+        networkErr instanceof Error
+          ? networkErr.message
+          : 'Network request failed while contacting the ML backend.';
+      lastError = new MlPipelineError(
         'network_error',
-        `Gateway / Render cold-start timeout (HTTP ${response.status}): ${errorDetail}`,
+        `Network error while connecting to ${API_BASE_URL}${endpointPath}: ${msg}`,
+        endpointPath
+      );
+      if (attempt < candidateUrls.length - 1) {
+        await sleepMs(1200 * (attempt + 1));
+        continue;
+      }
+      throw lastError;
+    }
+
+    const durationMs = Math.round(performance.now() - startTime);
+    const rawText = await response.text();
+
+    if (!response.ok) {
+      let errorDetail = `HTTP ${response.status} (${response.statusText})`;
+      try {
+        const errJson = JSON.parse(rawText);
+        if (typeof errJson?.detail === 'string') {
+          errorDetail = errJson.detail;
+        } else if (Array.isArray(errJson?.detail)) {
+          errorDetail = errJson.detail
+            .map((d: { msg?: string; loc?: unknown[] }) => {
+              const field = Array.isArray(d.loc) ? d.loc.join('.') : '';
+              return field ? `${field}: ${d.msg}` : d.msg || JSON.stringify(d);
+            })
+            .join('; ');
+        }
+      } catch {
+        // Fallback if error body is not JSON
+      }
+
+      if (response.status === 422) {
+        throw new MlPipelineError(
+          'validation_error',
+          `Schema validation rejected by FastAPI (HTTP 422): ${errorDetail}`,
+          endpointPath,
+          422
+        );
+      }
+
+      if (
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+      ) {
+        lastError = new MlPipelineError(
+          'network_error',
+          `Gateway / Render cold-start timeout (HTTP ${response.status}): ${errorDetail}`,
+          endpointPath,
+          response.status
+        );
+        if (attempt < candidateUrls.length - 1) {
+          await sleepMs(1500 * (attempt + 1));
+          continue;
+        }
+        throw lastError;
+      }
+
+      throw new MlPipelineError(
+        'backend_error',
+        errorDetail,
         endpointPath,
         response.status
       );
     }
 
-    throw new MlPipelineError(
-      'backend_error',
-      errorDetail,
-      endpointPath,
-      response.status
-    );
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(rawText);
+    } catch {
+      lastError = new MlPipelineError(
+        'invalid_response',
+        `Expected valid JSON from ${endpointPath}, but received unparseable response payload.`,
+        endpointPath,
+        response.status
+      );
+      if (attempt < candidateUrls.length - 1) {
+        await sleepMs(1200 * (attempt + 1));
+        continue;
+      }
+      throw lastError;
+    }
+
+    const validatedResult = validator(parsedJson, endpointPath);
+
+    if (metaHooks?.onMeta) {
+      metaHooks.onMeta({
+        endpoint: endpointPath,
+        method: (options.method as 'GET' | 'POST') || 'GET',
+        constructedPayload: metaHooks.constructedPayload ?? null,
+        queryString: metaHooks.queryString,
+        durationMs,
+        coldStartDetected: durationMs >= COLD_START_THRESHOLD_MS,
+        timestampIso: new Date().toISOString(),
+        responseStatus: response.status,
+      });
+    }
+
+    return validatedResult;
   }
 
-  let parsedJson: unknown;
-  try {
-    parsedJson = await response.json();
-  } catch {
-    throw new MlPipelineError(
-      'invalid_response',
-      `Expected valid JSON from ${endpointPath}, but received unparseable response payload.`,
-      endpointPath,
-      response.status
-    );
-  }
-
-  const validatedResult = validator(parsedJson, endpointPath);
-
-  if (metaHooks?.onMeta) {
-    metaHooks.onMeta({
-      endpoint: endpointPath,
-      method: (options.method as 'GET' | 'POST') || 'GET',
-      constructedPayload: metaHooks.constructedPayload ?? null,
-      queryString: metaHooks.queryString,
-      durationMs,
-      coldStartDetected: durationMs >= COLD_START_THRESHOLD_MS,
-      timestampIso: new Date().toISOString(),
-      responseStatus: response.status,
-    });
-  }
-
-  return validatedResult;
+  throw (
+    lastError ||
+    new MlPipelineError(
+      'network_error',
+      `Failed to fetch ${endpointPath}`,
+      endpointPath
+    )
+  );
 }
 
 export const nexusDemandApi = {

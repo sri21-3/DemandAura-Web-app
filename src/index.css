@@ -9,7 +9,12 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #F8FAFC;
+    background-color: #F4F7FB;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.06) 0px, transparent 45%),
+      radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.07) 0px, transparent 45%),
+      radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
     color: #0F172A;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -27,4 +32,64 @@
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Signature DemandAura Atmospheric Surfaces */
+.bg-aura-hero {
+  background-color: #070D22;
+  background-image:
+    radial-gradient(circle at 14% 22%, rgba(20, 184, 166, 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 86% 28%, rgba(139, 92, 246, 0.24) 0%, transparent 46%),
+    radial-gradient(circle at 52% 88%, rgba(14, 165, 233, 0.16) 0%, transparent 50%),
+    linear-gradient(135deg, #060B1E 0%, #0C1636 50%, #15103A 100%);
+}
+
+.bg-aura-banner {
+  background-color: #09132C;
+  background-image:
+    radial-gradient(circle at 12% 20%, rgba(6, 182, 212, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 88% 80%, rgba(124, 58, 237, 0.22) 0%, transparent 48%),
+    linear-gradient(135deg, #081229 0%, #101D42 52%, #1C1447 100%);
+}
+
+.bg-aura-sidebar {
+  background-color: #081026;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(124, 58, 237, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #070E22 0%, #0B1532 60%, #121036 100%);
+}
+
+.btn-aura-primary {
+  background-image: linear-gradient(135deg, #0D9488 0%, #0284C7 52%, #4F46E5 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-aura-primary:hover:not(:disabled) {
+  background-image: linear-gradient(135deg, #0F766E 0%, #0369A1 52%, #4338CA 100%);
+  box-shadow: 0 6px 20px -2px rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
+}
+
+.card-aura {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.03),
+    0 8px 24px -6px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-aura:hover {
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.05),
+    0 14px 32px -8px rgba(2, 132, 199, 0.08);
+}
+
+.text-aura-light-gradient {
+  background: linear-gradient(135deg, #5EEAD4 0%, #38BDF8 50%, #C084FC 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

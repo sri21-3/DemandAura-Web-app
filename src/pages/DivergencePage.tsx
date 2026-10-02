@@ -249,20 +249,20 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
   );
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-8">
-      {/* Page Title & Metadata */}
-      <div className="border-b border-slate-200 pb-6 space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+    <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+      {/* Atmospheric Page Header Banner */}
+      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg space-y-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-cyan-300 font-medium">
           <span>Opportunity &amp; Saturation Analysis</span>
-          <span aria-hidden="true">·</span>
-          <span>Scale: -1.00 to +1.00</span>
-          <span aria-hidden="true">·</span>
-          <span>14 Countries × 3 Categories</span>
+          <span aria-hidden="true" className="text-slate-600">·</span>
+          <span className="text-slate-300">Scale: -1.00 to +1.00</span>
+          <span aria-hidden="true" className="text-slate-600">·</span>
+          <span className="text-slate-300">14 Countries × 3 Categories</span>
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Demand vs. Hype Divergence Score
         </h1>
-        <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+        <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
           Reveals whether a country and consumer lifestyle category is
           experiencing genuine, underserved shopper demand or excessive media
           buzz. Positive scores highlight high-return opportunities to invest in
@@ -284,9 +284,10 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Understandable UI Controls */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+        <div className="lg:col-span-5 card-aura rounded-2xl p-6 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500" />
           <div className="space-y-1">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900">
               Select a Market to Evaluate
             </h2>
             <p className="text-xs text-slate-500">
@@ -297,7 +298,7 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
 
           {/* Preset Quick Selectors */}
           <div className="space-y-2">
-            <div className="text-xs font-medium text-slate-700">
+            <div className="text-xs font-semibold text-slate-700">
               Popular Market Comparisons
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -310,11 +311,11 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
                     setSelectedCountry(preset.country);
                     setSelectedCategory(preset.category);
                   }}
-                  className={`px-2.5 py-1.5 text-xs rounded-md border transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 ${
+                  className={`px-2.5 py-1.5 text-xs rounded-lg border transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 ${
                     selectedCountry === preset.country &&
                     selectedCategory === preset.category
-                      ? 'bg-slate-900 text-white border-slate-900 font-medium'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      ? 'btn-aura-primary border-transparent font-medium'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-teal-50/60 hover:border-teal-300'
                   }`}
                 >
                   {preset.tag}
@@ -421,7 +422,7 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
               type="submit"
               disabled={loading}
               aria-busy={loading}
-              className="w-full py-2.5 px-4 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap"
+              className="w-full py-3 px-4 text-sm font-semibold text-white btn-aura-primary rounded-xl disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
             >
               {loading
                 ? `Analyzing Market Balance (${(elapsedMs / 1000).toFixed(
@@ -462,7 +463,14 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
               <div className="h-24 w-full bg-slate-100 rounded animate-pulse" />
             </div>
           ) : result ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+            <div className="card-aura rounded-2xl p-6 space-y-6 relative overflow-hidden">
+              <div
+                className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${
+                  result.predicted_divergence_score >= 0
+                    ? 'from-emerald-400 via-teal-500 to-cyan-500'
+                    : 'from-amber-400 via-orange-500 to-rose-500'
+                }`}
+              />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
                 <div>
                   <div className="text-xs text-emerald-700 font-medium">
@@ -656,11 +664,11 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-2">
-              <div className="text-sm font-semibold text-slate-900">
+            <div className="card-aura rounded-2xl p-8 text-center space-y-2 border-dashed border-cyan-200 bg-gradient-to-br from-white via-cyan-50/20 to-indigo-50/20">
+              <div className="text-sm font-bold text-slate-900">
                 Ready to Evaluate Market Balance
               </div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
                 Select a Target Country and Consumer Category on the left and
                 click &ldquo;Check Demand vs. Hype Score&rdquo; to see whether
                 consumer demand is underserved or over-hyped.
@@ -669,12 +677,13 @@ export const DivergencePage: React.FC<DivergencePageProps> = ({
           )}
 
           {/* Decision Guide: How to Read the Divergence Score (-1.00 to +1.00) */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+          <div className="card-aura rounded-2xl p-6 space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-slate-400 to-emerald-500" />
             <div className="space-y-1.5">
-              <div className="text-xs text-slate-500">
+              <div className="text-xs font-semibold uppercase tracking-wider text-teal-700">
                 Decision Guide · Reading the Demand vs. Hype Scale
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-bold text-slate-900">
                 How to Read the Divergence Score (-1.00 to +1.00)
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">

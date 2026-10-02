@@ -9,19 +9,21 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
-    <footer className="bg-white border-t border-slate-200 mt-20">
+    <footer className="bg-[#070E24] text-slate-300 border-t border-slate-800/80 mt-20">
       <div className="max-w-[1400px] mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800/80">
           <div className="md:col-span-1 space-y-3">
             <button
               type="button"
               onClick={() => onNavigate('home')}
-              className="inline-flex items-center gap-2.5 text-lg font-semibold tracking-tight text-slate-900 hover:text-slate-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2.5 text-lg font-semibold tracking-tight text-white hover:opacity-90 transition-opacity cursor-pointer"
             >
               <DemandAuraLogo size={32} />
-              <span>DemandAura</span>
+              <span className="bg-gradient-to-r from-white via-cyan-100 to-indigo-200 bg-clip-text text-transparent">
+                DemandAura
+              </span>
             </button>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               Sense the Future of Global Consumer Demand. Uncover genuine market
               interest, filter out passing hype, and forecast 4-week demand
               trends across 14 countries in Fashion &amp; Beauty, Fitness &amp;
@@ -30,15 +32,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="space-y-2.5">
-            <div className="text-xs font-semibold text-slate-900">
+            <div className="text-xs font-semibold text-white">
               Market Foresight Tools
             </div>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-xs text-slate-400">
               <li>
                 <button
                   type="button"
                   onClick={() => onNavigate('divergence')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Demand vs. Hype Divergence Score
                 </button>
@@ -47,7 +49,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('forecast')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   4-Week Search Interest Forecast
                 </button>
@@ -56,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('segmentation')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Long-Term Market Segmentation
                 </button>
@@ -65,7 +67,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('segmentation')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   4-Week Recent Momentum Segmentation
                 </button>
@@ -74,15 +76,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="space-y-2.5">
-            <div className="text-xs font-semibold text-slate-900">
+            <div className="text-xs font-semibold text-white">
               Platform Navigation
             </div>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-xs text-slate-400">
               <li>
                 <button
                   type="button"
                   onClick={() => onNavigate('dashboard')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Intelligence Dashboard
                 </button>
@@ -91,7 +93,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('history')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Saved Market Analyses
                 </button>
@@ -100,7 +102,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('about')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   How It Works &amp; Keyword Coverage
                 </button>
@@ -109,7 +111,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <button
                   type="button"
                   onClick={() => onNavigate('contact')}
-                  className="hover:text-slate-900 transition-colors cursor-pointer"
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Contact &amp; Developer Info
                 </button>
@@ -118,17 +120,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div className="space-y-2.5">
-            <div className="text-xs font-semibold text-slate-900">
+            <div className="text-xs font-semibold text-white">
               Developer &amp; Creator
             </div>
-            <div className="text-xs text-slate-600 space-y-1.5 leading-relaxed">
-              <div className="font-semibold text-slate-900">
+            <div className="text-xs text-slate-400 space-y-1.5 leading-relaxed">
+              <div className="font-semibold text-white">
                 {DEVELOPER_INFO.name}
               </div>
               <div>
                 <a
                   href={`mailto:${DEVELOPER_INFO.email}`}
-                  className="text-slate-600 hover:text-slate-900 underline"
+                  className="text-cyan-300 hover:underline"
                 >
                   {DEVELOPER_INFO.email}
                 </a>
@@ -138,7 +140,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   href={DEVELOPER_INFO.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 hover:text-slate-900 underline font-medium"
+                  className="text-slate-300 hover:text-cyan-300 underline font-medium"
                 >
                   GitHub
                 </a>
@@ -147,7 +149,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   href={DEVELOPER_INFO.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-700 hover:text-slate-900 underline font-medium"
+                  className="text-slate-300 hover:text-cyan-300 underline font-medium"
                 >
                   LinkedIn
                 </a>
@@ -156,10 +158,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
             © {new Date().getFullYear()} DemandAura · Designed &amp; Developed
-            by <strong className="text-slate-800">{DEVELOPER_INFO.name}</strong>
+            by <strong className="text-white">{DEVELOPER_INFO.name}</strong>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span>14 Global Markets</span>

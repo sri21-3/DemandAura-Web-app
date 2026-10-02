@@ -14,60 +14,64 @@ interface AboutPageProps {
 
 export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-12 space-y-16">
-      {/* Hero Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pb-12 border-b border-slate-200">
-        <div className="lg:col-span-7 space-y-4">
-          <div className="inline-flex items-center gap-2.5 text-xs text-slate-500">
-            <DemandAuraLogo size={28} />
-            <span>
-              DemandAura · Platform Overview · Keyword Coverage · Decision Guide
-            </span>
-          </div>
-          <h1
-            className="text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight"
-            style={{ textWrap: 'balance' }}
-          >
-            Turning Global Search &amp; Media Signals into Confident Market
-            Decisions
-          </h1>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            DemandAura is a Demand Intelligence &amp; Market Foresight Platform
-            designed for brand leaders, merchandise planners, and international
-            growth teams. By comparing real consumer search behavior against
-            global news coverage and local economic conditions across 14
-            countries and 3 consumer categories, the platform helps you invest
-            ahead of real demand—and avoid paying for passing media hype.
-          </p>
-          <div className="pt-2 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => onNavigate('divergence')}
-              className="px-4 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 cursor-pointer"
+    <div className="space-y-16 pb-12">
+      {/* Atmospheric Hero Overview */}
+      <section className="bg-aura-hero text-white border-b border-slate-800">
+        <div className="max-w-[1400px] mx-auto px-6 py-14 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-7 space-y-5">
+            <div className="inline-flex items-center gap-2.5 text-xs text-cyan-300 font-medium">
+              <DemandAuraLogo size={28} />
+              <span>
+                DemandAura · Platform Overview · Keyword Coverage · Decision Guide
+              </span>
+            </div>
+            <h1
+              className="text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight"
+              style={{ textWrap: 'balance' }}
             >
-              Check Demand vs. Hype Score
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('forecast')}
-              className="px-4 py-2 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
-            >
-              Open 4-Week Forecaster
-            </button>
+              Turning Global Search &amp; Media Signals into Confident Market
+              Decisions
+            </h1>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              DemandAura is a Demand Intelligence &amp; Market Foresight Platform
+              designed for brand leaders, merchandise planners, and international
+              growth teams. By comparing real consumer search behavior against
+              global news coverage and local economic conditions across 14
+              countries and 3 consumer categories, the platform helps you invest
+              ahead of real demand—and avoid paying for passing media hype.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => onNavigate('divergence')}
+                className="px-5 py-2.5 text-xs font-semibold text-white btn-aura-primary rounded-xl cursor-pointer"
+              >
+                Check Demand vs. Hype Score
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('forecast')}
+                className="px-5 py-2.5 text-xs font-medium text-cyan-100 bg-slate-900/70 border border-cyan-400/30 rounded-xl hover:bg-slate-800 cursor-pointer"
+              >
+                Open 4-Week Forecaster
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-5">
-          <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-4/3">
-            <img
-              src={aboutImage}
-              alt="DemandAura Global Market Foresight Overview"
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-            />
+          <div className="lg:col-span-5">
+            <div className="rounded-2xl overflow-hidden border border-cyan-400/30 bg-slate-900 aspect-4/3 shadow-[0_20px_50px_-15px_rgba(6,182,212,0.3)]">
+              <img
+                src={aboutImage}
+                alt="DemandAura Global Market Foresight Overview"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <div className="max-w-[1400px] mx-auto px-6 space-y-16">
 
       {/* Real-World Information Sources */}
       <section className="space-y-6">
@@ -327,12 +331,12 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
       </section>
 
       {/* Developer Attribution Card */}
-      <section className="bg-slate-900 text-white rounded-xl p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <section className="bg-aura-banner text-white rounded-2xl p-8 border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-cyan-300 font-medium">
             Platform Creator &amp; Developer
           </div>
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className="text-2xl font-bold text-white">
             Designed &amp; Developed by {DEVELOPER_INFO.name}
           </h2>
           <p className="text-sm text-slate-300 leading-relaxed">
@@ -347,7 +351,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             href={DEVELOPER_INFO.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2.5 text-xs font-medium bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-semibold btn-aura-primary rounded-xl transition-colors whitespace-nowrap"
           >
             GitHub ({DEVELOPER_INFO.githubDisplay})
           </a>
@@ -355,18 +359,19 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             href={DEVELOPER_INFO.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2.5 text-xs font-medium text-white border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-medium text-white bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors whitespace-nowrap"
           >
             LinkedIn ({DEVELOPER_INFO.linkedinDisplay})
           </a>
           <a
             href={`mailto:${DEVELOPER_INFO.email}`}
-            className="px-4 py-2.5 text-xs font-medium text-white border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-medium text-white bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors whitespace-nowrap"
           >
             {DEVELOPER_INFO.email}
           </a>
         </div>
       </section>
+      </div>
     </div>
   );
 };

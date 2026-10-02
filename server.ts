@@ -27,6 +27,77 @@ function resolveUpstreamBase(req: Request): string {
   return DEFAULT_UPSTREAM_BASE;
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchUpstreamWithRetry(
+  targetUrl: string,
+  fetchOptions: RequestInit,
+  maxAttempts = 3
+): Promise<{ status: number; bodyText: string; isJson: boolean }> {
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50000);
+
+    try {
+      const upstreamRes = await fetch(targetUrl, {
+        ...fetchOptions,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const rawBody = await upstreamRes.text();
+      const trimmed = rawBody.trim();
+
+      // Detect if Render returned an HTML cold-start interstitial or gateway error page
+      const looksLikeHtml =
+        trimmed.startsWith('<!DOCTYPE') ||
+        trimmed.startsWith('<!doctype') ||
+        trimmed.startsWith('<html');
+
+      let parsedOk = false;
+      if (!looksLikeHtml && trimmed.length > 0) {
+        try {
+          JSON.parse(trimmed);
+          parsedOk = true;
+        } catch {
+          parsedOk = false;
+        }
+      }
+
+      if (
+        (upstreamRes.status === 502 ||
+          upstreamRes.status === 503 ||
+          upstreamRes.status === 504 ||
+          !parsedOk) &&
+        attempt < maxAttempts
+      ) {
+        await delay(1500 * attempt);
+        continue;
+      }
+
+      return {
+        status: upstreamRes.status,
+        bodyText: rawBody,
+        isJson: parsedOk,
+      };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      if (attempt < maxAttempts) {
+        await delay(1500 * attempt);
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Upstream request failed after retries');
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
@@ -44,9 +115,6 @@ async function startServer() {
     const subPath = req.url.startsWith('/') ? req.url : `/${req.url}`;
     const targetUrl = `${upstreamBase}${subPath}`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000);
-
     try {
       const fetchOptions: RequestInit = {
         method: req.method,
@@ -56,28 +124,26 @@ async function startServer() {
             ? { 'Content-Type': 'application/json' }
             : {}),
         },
-        signal: controller.signal,
       };
 
       if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
         fetchOptions.body = JSON.stringify(req.body);
       }
 
-      const upstreamRes = await fetch(targetUrl, fetchOptions);
-      clearTimeout(timeoutId);
+      const result = await fetchUpstreamWithRetry(targetUrl, fetchOptions, 3);
 
-      const contentType = upstreamRes.headers.get('content-type') || '';
-      const rawBody = await upstreamRes.text();
-
-      res.status(upstreamRes.status);
-      if (contentType.includes('application/json')) {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(rawBody);
-      } else {
-        res.send(rawBody);
+      if (!result.isJson) {
+        res.status(503).json({
+          detail:
+            'DemandAura backend on Render is waking up from cold start. Please retry in a few seconds.',
+        });
+        return;
       }
+
+      res.status(result.status);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.send(result.bodyText);
     } catch (error: unknown) {
-      clearTimeout(timeoutId);
       const message =
         error instanceof Error ? error.message : 'Upstream request failed';
       res.status(502).json({

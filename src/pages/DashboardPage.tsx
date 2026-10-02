@@ -3,12 +3,21 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  Clock,
+  Globe,
+  Layers,
+  RefreshCw,
+  TrendingUp,
+} from 'lucide-react';
 import { formatEntityLabel } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -32,6 +41,54 @@ interface DashboardPageProps {
   fourWeekReport?: MarkdownReportResponse | null;
   reportsLoading?: boolean;
 }
+
+const SEGMENT_COLORS = [
+  '#0D9488', // Teal
+  '#0284C7', // Sky Blue
+  '#4F46E5', // Indigo
+  '#7C3AED', // Violet
+  '#059669', // Emerald
+  '#D97706', // Amber
+  '#E11D48', // Rose
+];
+
+const SEGMENT_CARD_STYLES = [
+  {
+    topBar: 'from-teal-400 to-cyan-500',
+    bg: 'bg-teal-50/40 border-teal-200/70',
+    badge: 'text-teal-800 bg-teal-100/80',
+  },
+  {
+    topBar: 'from-sky-400 to-blue-600',
+    bg: 'bg-sky-50/40 border-sky-200/70',
+    badge: 'text-sky-800 bg-sky-100/80',
+  },
+  {
+    topBar: 'from-indigo-400 to-violet-600',
+    bg: 'bg-indigo-50/40 border-indigo-200/70',
+    badge: 'text-indigo-800 bg-indigo-100/80',
+  },
+  {
+    topBar: 'from-purple-400 to-fuchsia-600',
+    bg: 'bg-purple-50/40 border-purple-200/70',
+    badge: 'text-purple-800 bg-purple-100/80',
+  },
+  {
+    topBar: 'from-emerald-400 to-teal-600',
+    bg: 'bg-emerald-50/40 border-emerald-200/70',
+    badge: 'text-emerald-800 bg-emerald-100/80',
+  },
+  {
+    topBar: 'from-amber-400 to-orange-500',
+    bg: 'bg-amber-50/40 border-amber-200/70',
+    badge: 'text-amber-900 bg-amber-100/80',
+  },
+  {
+    topBar: 'from-rose-400 to-pink-600',
+    bg: 'bg-rose-50/40 border-rose-200/70',
+    badge: 'text-rose-800 bg-rose-100/80',
+  },
+];
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigate,
@@ -160,81 +217,83 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
-      {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Demand Intelligence Workspace</span>
-            <span aria-hidden="true">·</span>
-            <span>42 Global Markets (14 Countries × 3 Categories)</span>
+      {/* Atmospheric Executive Command Banner */}
+      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-cyan-300 font-medium">
+            <span>DemandAura Intelligence Workspace</span>
+            <span aria-hidden="true" className="text-slate-600">
+              ·
+            </span>
+            <span className="text-slate-300">
+              42 Global Markets (14 Countries × 3 Categories)
+            </span>
+            <span aria-hidden="true" className="text-slate-600">
+              ·
+            </span>
+            {healthLoading ? (
+              <span className="text-amber-300">
+                Waking up intelligence service...
+              </span>
+            ) : healthError ? (
+              <span className="text-rose-300">
+                Service reconnecting — click Refresh
+              </span>
+            ) : health?.status === 'healthy' ? (
+              <span className="text-emerald-300 inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                All 42 Markets Online
+              </span>
+            ) : (
+              <span className="text-slate-400">Syncing market signals...</span>
+            )}
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             {user
               ? `Welcome back, ${
                   profile?.displayName || user.displayName || 'Market Planner'
                 }`
               : 'Market Foresight Command Center'}
           </h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            Real-time consumer demand vs. media hype signals, 4-week search
+            interest trajectories, and dynamic weekly market segment reports.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <button
             type="button"
             onClick={onRefreshHealth}
             disabled={healthLoading}
-            className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-medium text-slate-200 bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 ${healthLoading ? 'animate-spin' : ''}`}
+              className={`w-3.5 h-3.5 text-cyan-400 ${
+                healthLoading ? 'animate-spin' : ''
+              }`}
             />
             <span>Refresh Market Data</span>
           </button>
           <button
             type="button"
             onClick={() => onNavigate('divergence')}
-            className="px-4 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+            className="px-4 py-2.5 text-xs font-semibold text-white btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
           >
             + Check Demand vs. Hype Score
           </button>
         </div>
       </div>
 
-      {/* Service & Market Coverage Status Banner */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Global Demand &amp; Media Intelligence Coverage
-          </h2>
-          <p className="text-xs text-slate-500">
-            Tracking 14 countries and 3 consumer lifestyle verticals across 3+
-            years of historical market behavior and a 4-week forward outlook.
-          </p>
-        </div>
-        <div className="text-xs font-medium shrink-0">
-          {healthLoading ? (
-            <span className="text-amber-700">
-              Waking up intelligence service (first connection may take up to 30
-              seconds)...
-            </span>
-          ) : healthError ? (
-            <span className="text-red-600">
-              Service temporarily unreachable — click Refresh Market Data
-            </span>
-          ) : health?.status === 'healthy' ? (
-            <span className="text-emerald-700">
-              All 42 Global Markets Online &amp; Ready
-            </span>
-          ) : (
-            <span className="text-slate-500">Connecting to market data...</span>
-          )}
-        </div>
-      </div>
-
-      {/* Executive KPI Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
-          <div className="text-xs text-slate-500">Global Markets Tracked</div>
-          <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+      {/* Color-Coded Executive KPI Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="card-aura rounded-2xl p-5 relative overflow-hidden space-y-1.5">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 to-cyan-500" />
+          <div className="flex items-center justify-between text-xs font-semibold text-teal-700">
+            <span>Global Markets Tracked</span>
+            <Globe className="w-4 h-4 text-teal-600" />
+          </div>
+          <div className="text-2xl font-bold text-slate-900 font-mono-tabular">
             42 Markets
           </div>
           <div className="text-xs text-slate-500">
@@ -242,18 +301,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
-          <div className="text-xs text-slate-500">
-            Fastest-Rising Market (4W)
+        <div className="card-aura rounded-2xl p-5 relative overflow-hidden space-y-1.5">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
+          <div className="flex items-center justify-between text-xs font-semibold text-emerald-700">
+            <span>Fastest-Rising Market (4W)</span>
+            <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-base font-semibold text-slate-900 truncate">
+          <div className="text-base font-bold text-slate-900 truncate">
             {topFastestMarket
               ? `${formatEntityLabel(
                   topFastestMarket.country_name
                 )} · ${formatEntityLabel(topFastestMarket.category)}`
               : 'Loading...'}
           </div>
-          <div className="text-xs text-emerald-700 font-mono-tabular font-medium">
+          <div className="text-xs text-emerald-700 font-mono-tabular font-semibold">
             {topFastestMarket
               ? `+${topFastestMarket.search_interest_trend_slope.toFixed(
                   2
@@ -264,18 +325,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
-          <div className="text-xs text-slate-500">
-            Top Underserved Demand (3Y+)
+        <div className="card-aura rounded-2xl p-5 relative overflow-hidden space-y-1.5">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-indigo-600" />
+          <div className="flex items-center justify-between text-xs font-semibold text-indigo-700">
+            <span>Top Underserved Demand (3Y+)</span>
+            <Activity className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-base font-semibold text-slate-900 truncate">
+          <div className="text-base font-bold text-slate-900 truncate">
             {topUnderservedMarket
               ? `${formatEntityLabel(
                   topUnderservedMarket.country_name
                 )} · ${formatEntityLabel(topUnderservedMarket.category)}`
               : 'Loading...'}
           </div>
-          <div className="text-xs text-slate-600 font-mono-tabular">
+          <div className="text-xs text-indigo-700 font-mono-tabular font-medium">
             {topUnderservedMarket
               ? `Demand-to-Media Ratio: ${topUnderservedMarket.mean_demand_to_hype_ratio.toFixed(
                   2
@@ -284,16 +347,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1">
-          <div className="text-xs text-slate-500">Saved Workspace Analyses</div>
-          <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+        <div className="card-aura rounded-2xl p-5 relative overflow-hidden space-y-1.5">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-fuchsia-600" />
+          <div className="flex items-center justify-between text-xs font-semibold text-purple-700">
+            <span>Saved Workspace Analyses</span>
+            <Clock className="w-4 h-4 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold text-slate-900 font-mono-tabular">
             {predictions.length}
           </div>
           <div className="text-xs text-slate-500">
             <button
               type="button"
               onClick={() => onNavigate('history')}
-              className="underline hover:text-slate-900 cursor-pointer"
+              className="text-purple-700 font-medium underline hover:text-purple-900 cursor-pointer"
             >
               View saved predictions &amp; notes
             </button>
@@ -301,38 +368,53 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* Interactive Visual Analytics Charts */}
+      {/* Interactive Multi-Colored Visual Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Visual 1: Fastest-Rising 4-Week Markets Bar Chart */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+        <div className="card-aura rounded-2xl p-6 space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-600" />
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-xs text-slate-500">
-                4-Week Momentum Visual · Demand Growth Slope
+              <div className="text-xs font-semibold text-teal-700">
+                4-Week Momentum Visual · Demand Growth Velocity
               </div>
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900">
                 Fastest-Accelerating Consumer Markets (Last 4 Weeks)
               </h3>
             </div>
             <button
               type="button"
               onClick={() => onNavigate('segmentation')}
-              className="text-xs font-medium text-slate-700 hover:text-slate-900 underline cursor-pointer whitespace-nowrap"
+              className="text-xs font-semibold text-cyan-700 hover:text-cyan-900 inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
-              Explore Map
+              <span>Explore Map</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {clustersLoading || risingMarketsChartData.length === 0 ? (
-            <div className="h-64 bg-slate-100 rounded-lg animate-pulse" />
+            <div className="h-64 bg-slate-100 rounded-xl animate-pulse" />
           ) : (
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={risingMarketsChartData}
                   layout="vertical"
-                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                  margin={{ top: 5, right: 24, left: 10, bottom: 5 }}
                 >
+                  <defs>
+                    <linearGradient
+                      id="risingBarGrad"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="0"
+                    >
+                      <stop offset="0%" stopColor="#0D9488" />
+                      <stop offset="50%" stopColor="#0284C7" />
+                      <stop offset="100%" stopColor="#4F46E5" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                   <XAxis
                     type="number"
@@ -341,8 +423,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <YAxis
                     type="category"
                     dataKey="marketLabel"
-                    width={135}
-                    tick={{ fontSize: 11, fill: '#0F172A' }}
+                    width={140}
+                    tick={{ fontSize: 11, fill: '#0F172A', fontWeight: 500 }}
                   />
                   <Tooltip
                     content={({ active, payload }) => {
@@ -354,13 +436,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         searchInterest: number;
                       };
                       return (
-                        <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1 shadow-lg">
-                          <div className="font-semibold">{item.fullMarket}</div>
-                          <div className="text-slate-300">
+                        <div className="bg-[#081229] text-white p-3.5 rounded-xl text-xs space-y-1 shadow-xl border border-cyan-500/30">
+                          <div className="font-semibold text-cyan-300">
+                            {item.fullMarket}
+                          </div>
+                          <div className="text-slate-300 font-medium">
                             {item.segmentName}
                           </div>
-                          <div className="font-mono-tabular pt-1 space-y-0.5">
-                            <div>4-Week Growth: +{item.growthSlope}</div>
+                          <div className="font-mono-tabular pt-1 border-t border-slate-800 space-y-0.5">
+                            <div className="text-emerald-400">
+                              4-Week Growth: +{item.growthSlope}
+                            </div>
                             <div>Avg Search Interest: {item.searchInterest}</div>
                           </div>
                         </div>
@@ -370,8 +456,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <Bar
                     dataKey="growthSlope"
                     name="4-Week Demand Growth"
-                    fill="#0F172A"
-                    radius={[0, 4, 4, 0]}
+                    fill="url(#risingBarGrad)"
+                    radius={[0, 6, 6, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -379,14 +465,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           )}
         </div>
 
-        {/* Visual 2: Market Segment Distribution Chart (by Segment Name) */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+        {/* Visual 2: Market Segment Distribution Chart (Multi-Colored by Segment Name) */}
+        <div className="card-aura rounded-2xl p-6 space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs font-semibold text-indigo-700">
                 Global Market Structure · Markets per Segment Name
               </div>
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900">
                 {reportHorizon === '4w'
                   ? '4-Week Market Segments Breakdown (42 Markets)'
                   : '3+ Year Long-Term Market Segments (42 Markets)'}
@@ -396,9 +483,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <button
                 type="button"
                 onClick={() => setReportHorizon('4w')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                   reportHorizon === '4w'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -407,9 +494,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <button
                 type="button"
                 onClick={() => setReportHorizon('overall')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
                   reportHorizon === 'overall'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -419,14 +506,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
 
           {clustersLoading || segmentDistributionChartData.length === 0 ? (
-            <div className="h-64 bg-slate-100 rounded-lg animate-pulse" />
+            <div className="h-64 bg-slate-100 rounded-xl animate-pulse" />
           ) : (
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={segmentDistributionChartData}
                   layout="vertical"
-                  margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                  margin={{ top: 5, right: 24, left: 10, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                   <XAxis
@@ -436,8 +523,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <YAxis
                     type="category"
                     dataKey="segmentName"
-                    width={165}
-                    tick={{ fontSize: 11, fill: '#0F172A' }}
+                    width={170}
+                    tick={{ fontSize: 11, fill: '#0F172A', fontWeight: 500 }}
                   />
                   <Tooltip
                     content={({ active, payload }) => {
@@ -448,9 +535,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                         avgSearch: number;
                       };
                       return (
-                        <div className="bg-slate-900 text-white p-3 rounded-lg text-xs space-y-1 shadow-lg">
-                          <div className="font-semibold">{item.segmentName}</div>
-                          <div className="font-mono-tabular pt-1 space-y-0.5">
+                        <div className="bg-[#081229] text-white p-3.5 rounded-xl text-xs space-y-1 shadow-xl border border-indigo-500/30">
+                          <div className="font-semibold text-indigo-300">
+                            {item.segmentName}
+                          </div>
+                          <div className="font-mono-tabular pt-1 border-t border-slate-800 space-y-0.5">
                             <div>Markets Assigned: {item.marketCount}</div>
                             <div>Avg Search Interest: {item.avgSearch}</div>
                           </div>
@@ -461,9 +550,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <Bar
                     dataKey="marketCount"
                     name="Markets in Segment"
-                    fill="#334155"
-                    radius={[0, 4, 4, 0]}
-                  />
+                    radius={[0, 6, 6, 0]}
+                  >
+                    {segmentDistributionChartData.map((entry, idx) => (
+                      <Cell
+                        key={entry.segmentName}
+                        fill={SEGMENT_COLORS[idx % SEGMENT_COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -474,13 +569,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Live Market Intelligence Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 4-Week Momentum Markets */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="card-aura rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-teal-50/60 via-cyan-50/30 to-transparent flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-sm font-bold text-slate-900">
                 Fastest-Rising Markets (Last 4 Weeks)
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Markets with the strongest recent growth in consumer search
                 interest
               </p>
@@ -488,7 +583,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('segmentation')}
-              className="text-xs font-medium text-slate-700 hover:text-slate-900 underline cursor-pointer"
+              className="text-xs font-semibold text-teal-700 hover:text-teal-900 underline cursor-pointer"
             >
               View All 42
             </button>
@@ -511,15 +606,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
-                    <th className="py-2.5 px-4 font-medium">Market</th>
-                    <th className="py-2.5 px-4 font-medium">
+                  <tr className="border-b border-slate-200 text-slate-600 bg-slate-50/80">
+                    <th className="py-3 px-4 font-semibold">Market</th>
+                    <th className="py-3 px-4 font-semibold">
                       4-Week Momentum Segment
                     </th>
-                    <th className="py-2.5 px-4 font-medium text-right">
+                    <th className="py-3 px-4 font-semibold text-right">
                       Search Interest
                     </th>
-                    <th className="py-2.5 px-4 font-medium text-right">
+                    <th className="py-3 px-4 font-semibold text-right">
                       4-Week Growth
                     </th>
                   </tr>
@@ -528,21 +623,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   {topMomentum4W.map((row) => (
                     <tr
                       key={`${row.country_name}-${row.category}`}
-                      className="hover:bg-slate-50"
+                      className="hover:bg-cyan-50/30 transition-colors"
                     >
-                      <td className="py-2.5 px-4 font-medium text-slate-900">
+                      <td className="py-3 px-4 font-semibold text-slate-900">
                         {formatEntityLabel(row.country_name)} ·{' '}
                         <span className="text-slate-600 font-normal">
                           {formatEntityLabel(row.category)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-4 text-slate-700 font-medium">
+                      <td className="py-3 px-4 text-teal-800 font-medium">
                         {row.Cluster_Name || 'Momentum Segment'}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-800">
+                      <td className="py-3 px-4 text-right font-mono-tabular text-slate-800">
                         {row.mean_search_interest.toFixed(2)}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono-tabular text-emerald-700 font-medium">
+                      <td className="py-3 px-4 text-right font-mono-tabular text-emerald-700 font-bold">
                         +{row.search_interest_trend_slope.toFixed(2)}
                       </td>
                     </tr>
@@ -554,13 +649,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         {/* Top Overall Demand-to-Hype Ratio Markets */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="card-aura rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50/60 via-violet-50/30 to-transparent flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-sm font-bold text-slate-900">
                 Strongest Underserved Demand (3+ Year History)
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Markets where shopper search interest consistently outpaces
                 media coverage
               </p>
@@ -568,7 +663,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('segmentation')}
-              className="text-xs font-medium text-slate-700 hover:text-slate-900 underline cursor-pointer"
+              className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
             >
               View All 42
             </button>
@@ -591,15 +686,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
-                    <th className="py-2.5 px-4 font-medium">Market</th>
-                    <th className="py-2.5 px-4 font-medium">
+                  <tr className="border-b border-slate-200 text-slate-600 bg-slate-50/80">
+                    <th className="py-3 px-4 font-semibold">Market</th>
+                    <th className="py-3 px-4 font-semibold">
                       3+ Year Market Segment
                     </th>
-                    <th className="py-2.5 px-4 font-medium text-right">
+                    <th className="py-3 px-4 font-semibold text-right">
                       Media Mentions
                     </th>
-                    <th className="py-2.5 px-4 font-medium text-right">
+                    <th className="py-3 px-4 font-semibold text-right">
                       Demand-to-Media Ratio
                     </th>
                   </tr>
@@ -608,21 +703,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   {topUntappedOverall.map((row) => (
                     <tr
                       key={`${row.country_name}-${row.category}`}
-                      className="hover:bg-slate-50"
+                      className="hover:bg-indigo-50/30 transition-colors"
                     >
-                      <td className="py-2.5 px-4 font-medium text-slate-900">
+                      <td className="py-3 px-4 font-semibold text-slate-900">
                         {formatEntityLabel(row.country_name)} ·{' '}
                         <span className="text-slate-600 font-normal">
                           {formatEntityLabel(row.category)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-4 text-slate-700 font-medium">
+                      <td className="py-3 px-4 text-indigo-800 font-medium">
                         {row.Cluster_Name || 'Strategic Segment'}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-800">
+                      <td className="py-3 px-4 text-right font-mono-tabular text-slate-800">
                         {row.mean_media_volume.toFixed(1)}
                       </td>
-                      <td className="py-2.5 px-4 text-right font-mono-tabular text-slate-900 font-semibold">
+                      <td className="py-3 px-4 text-right font-mono-tabular text-indigo-700 font-bold">
                         {row.mean_demand_to_hype_ratio.toFixed(2)}
                       </td>
                     </tr>
@@ -635,20 +730,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* Dynamic Weekly Market Segment Report Highlights */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="card-aura rounded-2xl p-6 lg:p-8 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-200">
           <div className="space-y-1">
-            <div className="text-xs text-slate-500">
-              Live Weekly Backend Report · Updated Automatically Every Week
+            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700">
+              <Layers className="w-4 h-4 text-indigo-600" />
+              <span>
+                Live Weekly Backend Report · Updated Automatically Every Week
+              </span>
             </div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900">
               Weekly Market Segment Report (
               {activeDashboardReport
                 ? `${activeDashboardReport.clusters.length} Discovered Segments`
                 : 'Loading Report...'}
               )
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Directly parsed from the weekly backend reports—highlighting each
               market segment&apos;s key insights, business use case, and core
               commercial question answered.
@@ -656,13 +754,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-start">
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
                 onClick={() => setReportHorizon('4w')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                   reportHorizon === '4w'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -671,9 +769,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <button
                 type="button"
                 onClick={() => setReportHorizon('overall')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                   reportHorizon === 'overall'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -684,7 +782,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('segmentation')}
-              className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 text-xs font-semibold text-white btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
             >
               Open Full Segment Report
             </button>
@@ -692,7 +790,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
 
         {reportsLoading && !activeDashboardReport ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
@@ -701,40 +799,49 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             ))}
           </div>
         ) : activeDashboardReport ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeDashboardReport.clusters.map((segment) => (
-              <div
-                key={segment.clusterLabel}
-                className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between space-y-3"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      {segment.clusterName}
-                    </h3>
-                    <span className="text-xs text-slate-500 font-mono-tabular shrink-0">
-                      {segment.marketCount}{' '}
-                      {segment.marketCount === 1 ? 'market' : 'markets'}
-                    </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {activeDashboardReport.clusters.map((segment, idx) => {
+              const style =
+                SEGMENT_CARD_STYLES[idx % SEGMENT_CARD_STYLES.length];
+              return (
+                <div
+                  key={segment.clusterLabel}
+                  className={`rounded-xl border p-5 flex flex-col justify-between space-y-3 relative overflow-hidden ${style.bg}`}
+                >
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${style.topBar}`}
+                  />
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">
+                        {segment.clusterName}
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-xs font-mono-tabular font-semibold shrink-0 ${style.badge}`}
+                      >
+                        {segment.marketCount}{' '}
+                        {segment.marketCount === 1 ? 'market' : 'markets'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      {segment.keyInsightsSummary}
+                    </p>
+                    {segment.businessUseCase && (
+                      <div className="pt-1 text-xs text-slate-800 leading-relaxed">
+                        <strong className="text-slate-950">Use Case:</strong>{' '}
+                        {segment.businessUseCase}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {segment.keyInsightsSummary}
-                  </p>
-                  {segment.businessUseCase && (
-                    <div className="pt-1 text-xs text-slate-700 leading-relaxed">
-                      <strong className="text-slate-900">Use Case:</strong>{' '}
-                      {segment.businessUseCase}
+
+                  {segment.coreBusinessQuestion && (
+                    <div className="pt-2.5 border-t border-slate-200/80 text-xs text-slate-700 italic font-medium">
+                      &ldquo;{segment.coreBusinessQuestion}&rdquo;
                     </div>
                   )}
                 </div>
-
-                {segment.coreBusinessQuestion && (
-                  <div className="pt-2 border-t border-slate-200/80 text-xs text-slate-600 italic">
-                    &ldquo;{segment.coreBusinessQuestion}&rdquo;
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-xs text-slate-500">
@@ -744,10 +851,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       </div>
 
       {/* Recent User Prediction & Query History Preview */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="card-aura rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900">
               Recent Market Analyses ({predictions.length})
             </h3>
             <p className="text-xs text-slate-500">
@@ -759,7 +866,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('history')}
-            className="text-xs font-medium text-slate-700 hover:text-slate-900 underline cursor-pointer"
+            className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
           >
             Open Full History
           </button>
@@ -767,7 +874,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         {predictions.length === 0 ? (
           <div className="p-8 text-center space-y-3">
-            <div className="text-sm font-medium text-slate-900">
+            <div className="text-sm font-semibold text-slate-900">
               No market analyses recorded yet
             </div>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
@@ -777,7 +884,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('divergence')}
-              className="px-4 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-4 py-2.5 text-xs font-semibold text-white btn-aura-primary rounded-xl cursor-pointer"
             >
               Check Demand vs. Hype Score
             </button>
@@ -786,31 +893,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
-                  <th className="py-2.5 px-4 font-medium">Date &amp; Time</th>
-                  <th className="py-2.5 px-4 font-medium">Analysis Tool</th>
-                  <th className="py-2.5 px-4 font-medium">Market Selected</th>
-                  <th className="py-2.5 px-4 font-medium">Result Summary</th>
-                  <th className="py-2.5 px-4 font-medium">Status</th>
+                <tr className="border-b border-slate-200 text-slate-600 bg-slate-50/80">
+                  <th className="py-3 px-4 font-semibold">Date &amp; Time</th>
+                  <th className="py-3 px-4 font-semibold">Analysis Tool</th>
+                  <th className="py-3 px-4 font-semibold">Market Selected</th>
+                  <th className="py-3 px-4 font-semibold">Result Summary</th>
+                  <th className="py-3 px-4 font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {predictions.slice(0, 5).map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono-tabular text-slate-500">
+                  <tr key={item.id} className="hover:bg-slate-50/80">
+                    <td className="py-3 px-4 font-mono-tabular text-slate-500">
                       {new Date(item.createdAtIso).toLocaleString()}
                     </td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">
+                    <td className="py-3 px-4 font-semibold text-slate-900">
                       {item.modelDisplayName}
                     </td>
-                    <td className="py-2.5 px-4 text-slate-700">
+                    <td className="py-3 px-4 text-slate-700 font-medium">
                       {formatEntityLabel(item.countryName)} ·{' '}
                       {formatEntityLabel(item.category)}
                     </td>
-                    <td className="py-2.5 px-4 font-mono-tabular font-semibold text-slate-900">
+                    <td className="py-3 px-4 font-mono-tabular font-semibold text-indigo-900">
                       {item.summaryValue}
                     </td>
-                    <td className="py-2.5 px-4 font-mono-tabular">
+                    <td className="py-3 px-4 font-mono-tabular">
                       <span
                         className={
                           item.predictionStatus === 'error'

@@ -81,8 +81,8 @@ function AppShell() {
       ]);
       setOverallClusters(overallRes.data || []);
       setFourWeekClusters(fourWeekRes.data || []);
-    } catch (err) {
-      console.error('Failed preloading segmentation tables:', err);
+    } catch {
+      // Handled gracefully by retry logic and UI status banners
     } finally {
       setClustersLoading(false);
     }

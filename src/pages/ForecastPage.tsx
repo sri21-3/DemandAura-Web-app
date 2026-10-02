@@ -198,20 +198,20 @@ export const ForecastPage: React.FC = () => {
   );
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-8">
-      {/* Page Header */}
-      <div className="border-b border-slate-200 pb-6 space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+    <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+      {/* Atmospheric Page Header Banner */}
+      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg space-y-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-cyan-300 font-medium">
           <span>4-Week Forward Demand Outlook</span>
-          <span aria-hidden="true">·</span>
-          <span>0–100 Consumer Search Index</span>
-          <span aria-hidden="true">·</span>
-          <span>14 Countries × 3 Categories</span>
+          <span aria-hidden="true" className="text-slate-600">·</span>
+          <span className="text-slate-300">0–100 Consumer Search Index</span>
+          <span aria-hidden="true" className="text-slate-600">·</span>
+          <span className="text-slate-300">14 Countries × 3 Categories</span>
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           4-Week Consumer Search Interest Forecast
         </h1>
-        <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+        <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
           Projects weekly consumer search interest (0–100 popularity scale) over
           the upcoming 4 weeks for any supported country and category. Use this
           outlook to prepare regional warehouse inventory ahead of demand surges
@@ -232,9 +232,10 @@ export const ForecastPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Understandable Forecast Controls */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-6 space-y-6">
+        <div className="lg:col-span-4 card-aura rounded-2xl p-6 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-600" />
           <div className="space-y-1">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900">
               Select Market to Forecast
             </h2>
             <p className="text-xs text-slate-500">
@@ -337,7 +338,7 @@ export const ForecastPage: React.FC = () => {
               type="submit"
               disabled={loading}
               aria-busy={loading}
-              className="w-full py-2.5 px-4 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap"
+              className="w-full py-3 px-4 text-sm font-semibold text-white btn-aura-primary rounded-xl disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
             >
               {loading
                 ? `Building 4-Week Outlook (${(elapsedMs / 1000).toFixed(
@@ -382,9 +383,10 @@ export const ForecastPage: React.FC = () => {
             <>
               {/* Summary Metrics Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1">
-                  <div className="text-xs text-slate-500">Week +1 Outlook</div>
-                  <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+                <div className="card-aura rounded-2xl p-4 space-y-1 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 to-cyan-500" />
+                  <div className="text-xs font-medium text-teal-700">Week +1 Outlook</div>
+                  <div className="text-2xl font-bold text-slate-900 font-mono-tabular">
                     {wk1.toFixed(2)}
                   </div>
                   <div className="text-xs text-slate-500 font-mono-tabular">
@@ -392,9 +394,10 @@ export const ForecastPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1">
-                  <div className="text-xs text-slate-500">Week +4 Outlook</div>
-                  <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+                <div className="card-aura rounded-2xl p-4 space-y-1 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-600" />
+                  <div className="text-xs font-medium text-sky-700">Week +4 Outlook</div>
+                  <div className="text-2xl font-bold text-slate-900 font-mono-tabular">
                     {wk4.toFixed(2)}
                   </div>
                   <div className="text-xs text-slate-500 font-mono-tabular">
@@ -402,9 +405,10 @@ export const ForecastPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1">
-                  <div className="text-xs text-slate-500">4-Week Average</div>
-                  <div className="text-2xl font-semibold text-slate-900 font-mono-tabular">
+                <div className="card-aura rounded-2xl p-4 space-y-1 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-600" />
+                  <div className="text-xs font-medium text-indigo-700">4-Week Average</div>
+                  <div className="text-2xl font-bold text-slate-900 font-mono-tabular">
                     {meanForecast.toFixed(2)}
                   </div>
                   <div className="text-xs text-slate-500">
@@ -412,10 +416,17 @@ export const ForecastPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1">
-                  <div className="text-xs text-slate-500">4-Week Net Shift</div>
+                <div className="card-aura rounded-2xl p-4 space-y-1 relative overflow-hidden">
                   <div
-                    className={`text-2xl font-semibold font-mono-tabular ${
+                    className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                      netDelta >= 0
+                        ? 'from-emerald-400 to-teal-500'
+                        : 'from-amber-400 to-orange-500'
+                    }`}
+                  />
+                  <div className="text-xs font-medium text-slate-600">4-Week Net Shift</div>
+                  <div
+                    className={`text-2xl font-bold font-mono-tabular ${
                       netDelta >= 0 ? 'text-emerald-700' : 'text-amber-700'
                     }`}
                   >
@@ -429,8 +440,8 @@ export const ForecastPage: React.FC = () => {
               </div>
 
               {/* Commercial Action Recommendation Banner */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-1.5">
-                <div className="text-xs font-semibold text-slate-900">
+              <div className="card-aura rounded-2xl p-5 space-y-1.5 bg-gradient-to-r from-cyan-50/60 via-white to-indigo-50/50 border-cyan-200/80">
+                <div className="text-xs font-bold text-slate-900">
                   Commercial Planning Recommendation for{' '}
                   {formatEntityLabel(forecast.country_name)} ·{' '}
                   {formatEntityLabel(forecast.category)}
@@ -453,13 +464,13 @@ export const ForecastPage: React.FC = () => {
               </div>
 
               {/* Recharts Trajectory Chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+              <div className="card-aura rounded-2xl p-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <div className="text-xs text-emerald-700 font-medium">
+                    <div className="text-xs text-teal-700 font-semibold uppercase tracking-wider">
                       4-Week Demand Outlook Ready
                     </div>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="text-base font-bold text-slate-900">
                       Projected Search Interest:{' '}
                       {formatEntityLabel(forecast.country_name)} ·{' '}
                       {formatEntityLabel(forecast.category)}
@@ -486,13 +497,13 @@ export const ForecastPage: React.FC = () => {
                         >
                           <stop
                             offset="5%"
-                            stopColor="#0F172A"
-                            stopOpacity={0.18}
+                            stopColor="#0284C7"
+                            stopOpacity={0.32}
                           />
                           <stop
                             offset="95%"
-                            stopColor="#0F172A"
-                            stopOpacity={0.01}
+                            stopColor="#4F46E5"
+                            stopOpacity={0.02}
                           />
                         </linearGradient>
                       </defs>
@@ -507,19 +518,19 @@ export const ForecastPage: React.FC = () => {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#0F172A',
+                          backgroundColor: '#09132C',
                           borderColor: '#1E293B',
                           color: '#F8FAFC',
                           fontSize: '12px',
-                          borderRadius: '8px',
+                          borderRadius: '10px',
                         }}
                       />
                       <Area
                         type="monotone"
                         dataKey="predicted_search_interest"
                         name="Projected Search Interest"
-                        stroke="#0F172A"
-                        strokeWidth={2.5}
+                        stroke="#0284C7"
+                        strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#forecastFill)"
                       />
@@ -594,11 +605,11 @@ export const ForecastPage: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-2">
-              <div className="text-sm font-semibold text-slate-900">
+            <div className="card-aura rounded-2xl p-10 text-center space-y-2 border-dashed border-cyan-200 bg-gradient-to-br from-white via-cyan-50/20 to-indigo-50/20">
+              <div className="text-sm font-bold text-slate-900">
                 Ready to Forecast Next 4 Weeks of Search Interest
               </div>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
+              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
                 Choose a Target Country and Consumer Category on the left and
                 click &ldquo;Generate 4-Week Forecast&rdquo; to view the
                 week-by-week shopper demand outlook.

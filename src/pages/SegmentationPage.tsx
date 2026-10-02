@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -452,27 +453,47 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
 
   const isProcessing = clustersLoading || queryLoading;
 
+  const SEGMENT_PALETTE = [
+    '#0D9488', // Teal
+    '#0284C7', // Sky Blue
+    '#4F46E5', // Indigo
+    '#7C3AED', // Violet
+    '#059669', // Emerald
+    '#D97706', // Amber
+    '#E11D48', // Rose
+  ];
+
+  const SEGMENT_TOP_BARS = [
+    'from-teal-400 to-cyan-500',
+    'from-sky-400 to-blue-600',
+    'from-indigo-400 to-violet-600',
+    'from-purple-400 to-fuchsia-600',
+    'from-emerald-400 to-teal-600',
+    'from-amber-400 to-orange-500',
+    'from-rose-400 to-pink-600',
+  ];
+
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-8">
-      {/* Header & Mode Switcher */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-slate-200">
+    <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+      {/* Atmospheric Header & Mode Switcher */}
+      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-cyan-300 font-medium">
             <span>Global Market Segmentation &amp; Weekly Reports</span>
-            <span aria-hidden="true">·</span>
-            <span>
+            <span aria-hidden="true" className="text-slate-600">·</span>
+            <span className="text-slate-300">
               {mode === 'overall'
                 ? 'Long-Term Multi-Year Market Structure (Updated Weekly)'
                 : 'Most Recent 4 Weeks of Market Momentum (Updated Weekly)'}
             </span>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Global Market Segmentation &amp; Dynamic Weekly Reports
           </h1>
-          <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+          <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
             Compare how all 42 country–category markets group together across{' '}
-            <strong>multi-year long-term history</strong> versus the{' '}
-            <strong>most recent 4 weeks</strong>. Every week, both the market
+            <strong className="text-white">multi-year long-term history</strong> versus the{' '}
+            <strong className="text-white">most recent 4 weeks</strong>. Every week, both the market
             segments and the executive reports update automatically from the
             backend pipeline—explaining each segment&apos;s metric trends,
             business interpretation, recommended use case, and core business
@@ -481,7 +502,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         </div>
 
         {/* Segmented Horizon Switcher */}
-        <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg self-start">
+        <div className="flex items-center gap-1 p-1.5 bg-slate-900/90 border border-slate-700/80 rounded-xl self-start">
           <button
             type="button"
             disabled={isProcessing}
@@ -489,10 +510,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
               setMode('overall');
               setSegmentFilter('all');
             }}
-            className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 ${
               mode === 'overall'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'btn-aura-primary text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             Long-Term Market Structure (3+ Years)
@@ -504,10 +525,10 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
               setMode('4w');
               setSegmentFilter('all');
             }}
-            className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap disabled:opacity-50 ${
               mode === '4w'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'btn-aura-primary text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             Last 4 Weeks Momentum
@@ -557,8 +578,9 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {marketSegments.map((seg) => {
+          {marketSegments.map((seg, idx) => {
             const selected = segmentFilter === String(seg.label);
+            const topBar = SEGMENT_TOP_BARS[idx % SEGMENT_TOP_BARS.length];
             return (
               <button
                 key={seg.label}
@@ -567,20 +589,23 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                 onClick={() =>
                   setSegmentFilter(selected ? 'all' : String(seg.label))
                 }
-                className={`text-left p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between space-y-3 disabled:opacity-60 ${
+                className={`text-left p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 relative overflow-hidden disabled:opacity-60 ${
                   selected
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-900 border-slate-200 hover:border-slate-400'
+                    ? 'bg-[#09132C] text-white border-cyan-500/50 shadow-md'
+                    : 'card-aura text-slate-900 hover:border-cyan-300'
                 }`}
               >
-                <div className="space-y-1.5">
+                <div
+                  className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${topBar}`}
+                />
+                <div className="space-y-1.5 pt-0.5">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold leading-snug">
+                    <div className="text-sm font-bold leading-snug">
                       {seg.name}
                     </div>
                     <span
                       className={`text-xs font-mono-tabular shrink-0 ${
-                        selected ? 'text-slate-300' : 'text-slate-500'
+                        selected ? 'text-cyan-300' : 'text-teal-700 font-semibold'
                       }`}
                     >
                       {seg.count} {seg.count === 1 ? 'market' : 'markets'}
@@ -699,7 +724,7 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
             type="submit"
             disabled={isProcessing}
             aria-busy={isProcessing}
-            className="px-3.5 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+            className="px-4 py-2 text-xs font-semibold text-white btn-aura-primary rounded-lg disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
           >
             {queryLoading
               ? `Syncing Weekly Data (${(elapsedMs / 1000).toFixed(1)}s)...`
@@ -924,8 +949,24 @@ export const SegmentationPage: React.FC<SegmentationPageProps> = ({
                   <Scatter
                     name="Markets"
                     data={filteredRows}
-                    fill="#0F172A"
-                  />
+                    fill="#0284C7"
+                  >
+                    {filteredRows.map((entry, idx) => {
+                      const segIndex =
+                        typeof entry.Cluster_Label === 'number' &&
+                        entry.Cluster_Label >= 0
+                          ? entry.Cluster_Label
+                          : idx;
+                      return (
+                        <Cell
+                          key={`cell-${entry.country_name}-${entry.category}`}
+                          fill={
+                            SEGMENT_PALETTE[segIndex % SEGMENT_PALETTE.length]
+                          }
+                        />
+                      );
+                    })}
+                  </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </div>

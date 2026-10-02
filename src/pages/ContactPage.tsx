@@ -63,24 +63,25 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-12 space-y-12">
-      <div className="border-b border-slate-200 pb-6 space-y-2">
-        <div className="text-xs text-slate-500">
+    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-10">
+      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg space-y-2">
+        <div className="text-xs text-cyan-300 font-medium">
           Direct Developer Contact &amp; Market Foresight Support
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Contact DemandAura &amp; {DEVELOPER_INFO.name}
         </h1>
-        <p className="text-sm text-slate-600 max-w-2xl">
-          Connect directly with developer <strong>{DEVELOPER_INFO.name}</strong>{' '}
+        <p className="text-sm text-slate-300 max-w-2xl">
+          Connect directly with developer <strong className="text-white">{DEVELOPER_INFO.name}</strong>{' '}
           or submit a market intelligence inquiry below.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Form Column */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 space-y-6">
-          <h2 className="text-base font-semibold text-slate-900">
+        <div className="lg:col-span-7 card-aura rounded-2xl p-6 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-teal-400 via-cyan-500 to-indigo-600" />
+          <h2 className="text-base font-bold text-slate-900">
             Submit a Market Intelligence Inquiry
           </h2>
 
@@ -204,7 +205,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
             <button
               type="submit"
               disabled={submitting || !user}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2.5 text-sm font-semibold text-white btn-aura-primary rounded-xl disabled:opacity-50 cursor-pointer"
             >
               {submitting ? 'Sending Inquiry...' : 'Submit Inquiry'}
             </button>
@@ -214,7 +215,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
         {/* Right Column: Developer Profile, Coverage Summary & Previous Inquiries */}
         <div className="lg:col-span-5 space-y-6">
           {/* Developer Direct Contact Card */}
-          <div className="bg-slate-900 text-white rounded-xl p-6 space-y-4">
+          <div className="bg-aura-banner text-white rounded-2xl p-6 border border-slate-800 shadow-lg space-y-4">
             <div className="space-y-1">
               <div className="text-xs text-slate-400">
                 Developer &amp; Platform Creator
