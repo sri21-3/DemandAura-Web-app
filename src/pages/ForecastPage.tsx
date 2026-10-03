@@ -51,6 +51,7 @@ export const ForecastPage: React.FC = () => {
     useState<PipelineExecutionMeta | null>(null);
 
   const timerRef = useRef<number | null>(null);
+  const outputRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (profile?.preferredCountry) {
@@ -76,6 +77,10 @@ export const ForecastPage: React.FC = () => {
     setLoading(true);
     setElapsedMs(0);
     setError(null);
+
+    if (outputRef.current && window.innerWidth < 1024) {
+      outputRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
     const startTs = performance.now();
     timerRef.current = window.setInterval(() => {
@@ -198,9 +203,9 @@ export const ForecastPage: React.FC = () => {
   );
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
-      {/* Atmospheric Page Header Banner */}
-      <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg space-y-2">
+    <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+      {/* Compact Atmospheric Page Header Banner */}
+      <div className="bg-aura-banner text-white rounded-2xl px-6 py-5 border border-slate-800 shadow-lg space-y-1.5">
         <div className="flex flex-wrap items-center gap-2 text-xs text-cyan-300 font-medium">
           <span>4-Week Forward Demand Outlook</span>
           <span aria-hidden="true" className="text-slate-600">·</span>
@@ -208,14 +213,12 @@ export const ForecastPage: React.FC = () => {
           <span aria-hidden="true" className="text-slate-600">·</span>
           <span className="text-slate-300">14 Countries × 3 Categories</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
           4-Week Consumer Search Interest Forecast
         </h1>
-        <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
           Projects weekly consumer search interest (0–100 popularity scale) over
-          the upcoming 4 weeks for any supported country and category. Use this
-          outlook to prepare regional warehouse inventory ahead of demand surges
-          and schedule marketing campaigns to hit peak shopper interest.
+          the upcoming 4 weeks for any supported country and category.
         </p>
       </div>
 
@@ -294,24 +297,9 @@ export const ForecastPage: React.FC = () => {
                 ))}
               </select>
               {selectedCategoryObj && (
-                <div className="pt-1.5 space-y-1.5 text-xs">
-                  <p className="text-slate-500">
-                    {selectedCategoryObj.description}
-                  </p>
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
-                    <div className="font-semibold text-slate-800">
-                      Tracked Keywords in {selectedCategoryObj.label}:
-                    </div>
-                    {selectedCategoryObj.keywordBatches.map((batch) => (
-                      <div key={batch.theme} className="text-slate-600">
-                        <span className="font-medium text-slate-800">
-                          {batch.theme}:
-                        </span>{' '}
-                        {batch.keywords.join(' · ')}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-xs text-slate-500">
+                  {selectedCategoryObj.description}
+                </p>
               )}
             </div>
 
@@ -348,6 +336,25 @@ export const ForecastPage: React.FC = () => {
             </button>
           </form>
 
+          {/* Tracked Keywords Block (Placed Below Submit Button) */}
+          {selectedCategoryObj && (
+            <div className="pt-4 border-t border-slate-100 space-y-2 text-xs">
+              <div className="font-semibold text-slate-900">
+                Tracked Keywords in {selectedCategoryObj.label}:
+              </div>
+              <div className="p-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl space-y-1.5">
+                {selectedCategoryObj.keywordBatches.map((batch) => (
+                  <div key={batch.theme} className="text-slate-600 leading-relaxed">
+                    <span className="font-semibold text-slate-800">
+                      {batch.theme}:
+                    </span>{' '}
+                    {batch.keywords.join(' · ')}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* How to Use This Forecast */}
           <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
             <div className="font-semibold text-slate-900">
@@ -364,7 +371,7 @@ export const ForecastPage: React.FC = () => {
         </div>
 
         {/* Right Column: Forecast Chart & Tabular Trajectory */}
-        <div className="lg:col-span-8 space-y-6">
+        <div ref={outputRef} className="lg:col-span-8 space-y-6">
           {loading ? (
             <div className="bg-white border border-slate-200 rounded-xl p-8 space-y-6">
               <div className="flex items-center justify-between">

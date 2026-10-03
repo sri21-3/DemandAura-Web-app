@@ -33,10 +33,13 @@ import {
   sanitizeString,
 } from '../firebase';
 import {
+  AdminRole,
   CanonicalCategory,
   CanonicalCountry,
   ContactInquiry,
   InquiryTopic,
+  LoginMethod,
+  LoginStatus,
   ModelTypeKey,
   PredictionRecord,
   PredictionStatus,
@@ -65,6 +68,8 @@ interface AuthContextValue {
   uid: string | null;
   profile: UserProfile | null;
   userEmail: string | null;
+  isAdmin: boolean;
+  adminRole: AdminRole | null;
   isAuthReady: boolean;
   isAuthActionPending: boolean;
   authError: string | null;
@@ -72,6 +77,12 @@ interface AuthContextValue {
   clearAuthError: () => void;
   predictions: PredictionRecord[];
   inquiries: ContactInquiry[];
+  recordUserLogin: (
+    currentUser: User,
+    method?: LoginMethod,
+    status?: LoginStatus
+  ) => Promise<void>;
+  adminQuickSignIn: (email?: string, password?: string) => Promise<void>;
   signUpWithEmail: (input: EmailSignUpInput) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -120,6 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isAuthActionPending, setIsAuthActionPending] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -131,6 +144,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setAuthError(null);
     setIsEmailProviderDisabled(false);
   };
+
+  // Record audit log entry in /userLogins for administrator monitoring
+  async function recordUserLogin(
+    currentUser: User,
+    method: LoginMethod = 'password',
+    status: LoginStatus = 'success'
+  ) {
+    try {
+      const userAgent = (
+        typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'
+      ).slice(0, 300);
+      const platform = (
+        typeof navigator !== 'undefined' ? navigator.platform || 'Web' : 'Web'
+      ).slice(0, 100);
+      const locationTimezone = (
+        typeof Intl !== 'undefined'
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+          : 'UTC'
+      ).slice(0, 100);
+      const screenResolution = (
+        typeof window !== 'undefined'
+          ? `${window.innerWidth}x${window.innerHeight}`
+          : '1920x1080'
+      ).slice(0, 50);
+
+      const loginId = `log_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 8)}`;
+      const loginDocRef = doc(db, 'userLogins', loginId);
+
+      await setDoc(loginDocRef, {
+        uid: currentUser.uid,
+        email: (currentUser.email || 'analyst@demandaura.ai').slice(0, 120),
+        displayName: (
+          currentUser.displayName ||
+          currentUser.email?.split('@')[0] ||
+          'Market Analyst'
+        ).slice(0, 100),
+        loginMethod: method,
+        status,
+        userAgent,
+        platform,
+        locationTimezone,
+        screenResolution,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Could not record user login audit log:', err);
+    }
+  }
 
   // Ensure application-level UserProfile exists in /users/{uid}.
   // Does NOT store passwords or duplicate Firebase Auth email credentials in Firestore.
@@ -164,7 +227,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setUserEmail(firebaseUser.email || null);
 
-    if (!firebaseUser.emailVerified) {
+    const isSuperAdmin =
+      firebaseUser.email?.toLowerCase() === '21sri97v@gmail.com';
+    if (!firebaseUser.emailVerified && !isSuperAdmin) {
       setProfile((prev) => prev || defaultProfile);
       return;
     }
@@ -190,6 +255,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  // Admin access detection and registry synchronization
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      setAdminRole(null);
+      return;
+    }
+
+    const isSuper = user.email?.toLowerCase() === '21sri97v@gmail.com';
+    if (isSuper) {
+      setIsAdmin(true);
+      setAdminRole('super_admin');
+
+      // Bootstrap admin record in /admins/{uid} if missing
+      const adminDocRef = doc(db, 'admins', user.uid);
+      getDoc(adminDocRef)
+        .then((snap) => {
+          if (!snap.exists()) {
+            setDoc(adminDocRef, {
+              uid: user.uid,
+              email: user.email || '21sri97v@gmail.com',
+              role: 'super_admin',
+              assignedBy: 'system',
+              isActive: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // Check if documented in /admins/{uid}
+    const adminDocRef = doc(db, 'admins', user.uid);
+    getDoc(adminDocRef)
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data?.isActive !== false) {
+            setIsAdmin(true);
+            setAdminRole((data?.role as AdminRole) || 'admin');
+            return;
+          }
+        }
+        setIsAdmin(false);
+        setAdminRole(null);
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setAdminRole(null);
+      });
+  }, [user]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -213,7 +332,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Real-time listeners for user profile, prediction history, and inquiries scoped by authenticated UID
   useEffect(() => {
-    if (!isAuthReady || !user || !user.emailVerified) {
+    if (
+      !isAuthReady ||
+      !user ||
+      (!user.emailVerified && user.email?.toLowerCase() !== '21sri97v@gmail.com')
+    ) {
       return;
     }
 
@@ -332,6 +455,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         preferredCountry: input.preferredCountry,
         preferredCategory: input.preferredCategory,
       });
+
+      await recordUserLogin(credential.user, 'password', 'success');
     } catch (err: unknown) {
       const formatted = formatFirebaseAuthError(err);
       setAuthError(formatted.message);
@@ -346,7 +471,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearAuthError();
     setIsAuthActionPending(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      await recordUserLogin(cred.user, 'password', 'success');
     } catch (err: unknown) {
       const formatted = formatFirebaseAuthError(err);
       setAuthError(formatted.message);
@@ -361,7 +487,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     clearAuthError();
     setIsAuthActionPending(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      await recordUserLogin(cred.user, 'google', 'success');
+    } catch (err: unknown) {
+      const formatted = formatFirebaseAuthError(err);
+      setAuthError(formatted.message);
+      throw err;
+    } finally {
+      setIsAuthActionPending(false);
+    }
+  }
+
+  async function adminQuickSignIn(email = '21sri97v@gmail.com', password = '') {
+    clearAuthError();
+    setIsAuthActionPending(true);
+    try {
+      const targetEmail = email.trim() || '21sri97v@gmail.com';
+      if (password) {
+        let cred: any = null;
+        try {
+          cred = await signInWithEmailAndPassword(auth, targetEmail, password);
+        } catch (signErr: any) {
+          if (
+            signErr?.code === 'auth/user-not-found' ||
+            signErr?.code === 'auth/invalid-credential'
+          ) {
+            cred = await createUserWithEmailAndPassword(
+              auth,
+              targetEmail,
+              password
+            );
+            await updateProfile(cred.user, {
+              displayName: 'Lead Administrator',
+            });
+          } else {
+            throw signErr;
+          }
+        }
+        if (cred?.user) {
+          await recordUserLogin(cred.user, 'admin_quick', 'success');
+        }
+      } else {
+        const cred = await signInWithPopup(auth, googleProvider);
+        if (cred?.user) {
+          await recordUserLogin(cred.user, 'google', 'success');
+        }
+      }
     } catch (err: unknown) {
       const formatted = formatFirebaseAuthError(err);
       setAuthError(formatted.message);
@@ -649,6 +820,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         uid: user?.uid ?? null,
         profile,
         userEmail,
+        isAdmin,
+        adminRole,
         isAuthReady,
         isAuthActionPending,
         authError,
@@ -656,6 +829,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         clearAuthError,
         predictions,
         inquiries,
+        recordUserLogin,
+        adminQuickSignIn,
         signUpWithEmail,
         signInWithEmail,
         signInWithGoogle,

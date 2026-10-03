@@ -139,6 +139,36 @@ export interface ContactInquiry {
   createdAtIso: string;
 }
 
+export type LoginMethod = 'google' | 'password' | 'admin_quick';
+export type LoginStatus = 'success' | 'failed';
+
+export interface UserLoginLog {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;
+  loginMethod: LoginMethod;
+  status: LoginStatus;
+  userAgent: string;
+  platform: string;
+  locationTimezone: string;
+  screenResolution: string;
+  createdAtIso: string;
+}
+
+export type AdminRole = 'super_admin' | 'admin' | 'analyst';
+
+export interface AdminUser {
+  id: string;
+  uid: string;
+  email: string;
+  role: AdminRole;
+  assignedBy: string;
+  isActive: boolean;
+  createdAtIso: string;
+  updatedAtIso: string;
+}
+
 export type AppPage =
   | 'home'
   | 'dashboard'
@@ -150,7 +180,8 @@ export type AppPage =
   | 'contact'
   | 'signin'
   | 'signup'
-  | 'profile';
+  | 'profile'
+  | 'admin';
 
 export type MlErrorCategory =
   | 'validation_error'

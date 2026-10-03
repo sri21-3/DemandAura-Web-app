@@ -57,7 +57,9 @@ function replaceClusterTerminology(text: string): string {
     .replace(/\bClusters\b/g, 'Market Segments')
     .replace(/\bclusters\b/g, 'market segments')
     .replace(/\bCluster\b/g, 'Market Segment')
-    .replace(/\bcluster\b/g, 'market segment');
+    .replace(/\bcluster\b/g, 'market segment')
+    .replace(/\brecords\b/gi, 'markets')
+    .replace(/\brecord\b/gi, 'market');
 }
 
 /**

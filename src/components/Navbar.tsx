@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, Shield, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AppPage } from '../types/models';
 import { DemandAuraLogo } from './DemandAuraLogo';
@@ -18,7 +18,8 @@ const WORKSPACE_PAGES = new Set<AppPage>([
 ]);
 
 export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
-  const { user, profile, logout, isAuthReady, isAuthActionPending } = useAuth();
+  const { user, profile, logout, isAuthReady, isAuthActionPending, isAdmin } =
+    useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Ordered strictly as requested: Home, About, Contact, Dashboard
@@ -80,8 +81,29 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           })}
         </nav>
 
-        {/* Zone 3: Primary Account Actions */}
+        {/* Zone 3: Primary Account Actions & Admin Access */}
         <div className="hidden lg:flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleNav('admin')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+              currentPage === 'admin'
+                ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 shadow-sm'
+                : 'border-slate-700/80 bg-slate-900/60 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-800'
+            }`}
+            title="DemandAura Administrative Command Center"
+          >
+            <Shield
+              className={`w-3.5 h-3.5 ${
+                isAdmin ? 'text-cyan-400' : 'text-slate-400'
+              }`}
+            />
+            <span>Admin</span>
+            {isAdmin && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            )}
+          </button>
+
           {!isAuthReady ? (
             <span className="text-xs text-slate-400 font-mono-tabular">
               Checking Session...
@@ -168,6 +190,29 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate }) => {
               );
             })}
           </div>
+
+          <button
+            type="button"
+            onClick={() => handleNav('admin')}
+            className={`w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg border transition-colors ${
+              currentPage === 'admin'
+                ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200'
+                : 'border-slate-800 bg-slate-900/60 text-slate-300'
+            }`}
+          >
+            <Shield
+              className={`w-3.5 h-3.5 ${
+                isAdmin ? 'text-cyan-400' : 'text-slate-400'
+              }`}
+            />
+            <span>Admin Command Center</span>
+            {isAdmin && (
+              <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-mono">
+                Active
+              </span>
+            )}
+          </button>
+
           <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
             {user ? (
               <>

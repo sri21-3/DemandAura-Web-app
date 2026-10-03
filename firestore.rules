@@ -32,6 +32,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isSuperAdminEmail() {
+      return isSignedIn() && request.auth.token.email != null && request.auth.token.email == '21sri97v@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSuperAdminEmail() || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
     function isValidCountry(country) {
       return country is string && country.size() <= 64 && country in [
         'Australia',
@@ -172,10 +180,79 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isValidUserLogin(data) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'displayName',
+          'loginMethod',
+          'status',
+          'userAgent',
+          'platform',
+          'locationTimezone',
+          'screenResolution',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'loginMethod',
+          'status',
+          'userAgent',
+          'platform',
+          'locationTimezone',
+          'screenResolution',
+          'createdAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == request.auth.uid
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 120
+        && data.displayName is string && data.displayName.size() >= 0 && data.displayName.size() <= 100
+        && data.loginMethod is string && data.loginMethod.size() <= 32
+        && data.loginMethod in ['google', 'password', 'admin_quick']
+        && data.status is string && data.status.size() <= 32
+        && data.status in ['success', 'failed']
+        && data.userAgent is string && data.userAgent.size() >= 0 && data.userAgent.size() <= 300
+        && data.platform is string && data.platform.size() >= 0 && data.platform.size() <= 100
+        && data.locationTimezone is string && data.locationTimezone.size() >= 0 && data.locationTimezone.size() <= 100
+        && data.screenResolution is string && data.screenResolution.size() >= 0 && data.screenResolution.size() <= 50
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'role',
+          'assignedBy',
+          'isActive',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'email',
+          'role',
+          'assignedBy',
+          'isActive',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 120
+        && data.role is string && data.role.size() <= 32
+        && data.role in ['super_admin', 'admin', 'analyst']
+        && data.assignedBy is string && data.assignedBy.size() >= 1 && data.assignedBy.size() <= 128
+        && data.isActive is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // 4. Collection Match Blocks
     match /users/{userId} {
-      allow get: if isOwner(userId) && isValidId(userId);
-      allow list: if false;
+      allow get: if (isOwner(userId) || isAdmin()) && isValidId(userId);
+      allow list: if isAdmin();
       allow create: if isVerifiedUser()
         && isOwner(userId)
         && isValidId(userId)
@@ -252,30 +329,75 @@ service cloud.firestore {
     match /contactInquiries/{inquiryId} {
       allow get: if isSignedIn()
         && isValidId(inquiryId)
-        && existing().uid == request.auth.uid;
+        && (existing().uid == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && existing().uid == request.auth.uid;
+        && (resource.data.uid == request.auth.uid || isSuperAdminEmail() || isAdmin());
       allow create: if isVerifiedUser()
         && isValidId(inquiryId)
         && isValidContactInquiry(incoming())
         && incoming().status == 'submitted'
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
-      allow update: if isVerifiedUser()
-        && isValidId(inquiryId)
+      allow update: if isValidId(inquiryId)
         && isValidContactInquiry(incoming())
-        && existing().uid == request.auth.uid
-        && existing().status != 'resolved'
-        && incoming().uid == existing().uid
-        && incoming().senderName == existing().senderName
-        && incoming().organization == existing().organization
-        && incoming().topic == existing().topic
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
         && (
-          incoming().diff(existing()).affectedKeys().hasOnly(['message', 'status', 'updatedAt'])
+          (
+            isVerifiedUser()
+            && existing().uid == request.auth.uid
+            && existing().status != 'resolved'
+            && incoming().uid == existing().uid
+            && incoming().senderName == existing().senderName
+            && incoming().organization == existing().organization
+            && incoming().topic == existing().topic
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['message', 'status', 'updatedAt'])
+          )
+          || (
+            isAdmin()
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+          )
         );
       allow delete: if false;
+    }
+
+    // User Login Audit Trail Collection
+    match /userLogins/{loginId} {
+      allow get: if isSignedIn()
+        && isValidId(loginId)
+        && (existing().uid == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isSuperAdminEmail() || isAdmin());
+      allow create: if isSignedIn()
+        && isValidId(loginId)
+        && isValidUserLogin(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Admin Users Directory
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId);
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && isValidId(adminId)
+        && isValidAdminUser(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(adminId)
+        && isValidAdminUser(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'isActive', 'updatedAt']);
+      allow delete: if isAdmin()
+        && isValidId(adminId)
+        && adminId != request.auth.uid;
     }
   }
 }

@@ -10,6 +10,7 @@ import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { AboutPage } from './pages/AboutPage';
+import { AdminPage } from './pages/AdminPage';
 import { AuthView, ProfilePage } from './pages/AuthPages';
 import { ContactPage } from './pages/ContactPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -36,6 +37,9 @@ const WORKSPACE_PAGES = new Set<AppPage>([
 
 function AppShell() {
   const [currentPage, setCurrentPage] = useState<AppPage>('home');
+  const [systemAnnouncement, setSystemAnnouncement] = useState<string | null>(
+    null
+  );
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [healthError, setHealthError] = useState<string | null>(null);
@@ -125,6 +129,29 @@ function AppShell() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900">
       <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
+
+      {systemAnnouncement && (
+        <div className="bg-gradient-to-r from-[#070E24] via-indigo-950 to-[#070E24] border-b border-indigo-500/40 px-6 py-2.5 text-xs text-white shadow-md">
+          <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-1">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 uppercase tracking-wider font-mono">
+                Platform Alert
+              </span>
+              <span className="font-medium text-slate-200">
+                {systemAnnouncement}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSystemAnnouncement(null)}
+              className="text-slate-400 hover:text-white text-sm cursor-pointer px-1.5"
+              title="Dismiss Announcement"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="flex-1">
         {currentPage === 'home' && (
@@ -226,6 +253,14 @@ function AppShell() {
           >
             <ProfilePage onNavigate={handleNavigate} />
           </ProtectedRoute>
+        )}
+
+        {currentPage === 'admin' && (
+          <AdminPage
+            onNavigate={handleNavigate}
+            systemAnnouncement={systemAnnouncement}
+            onUpdateSystemAnnouncement={setSystemAnnouncement}
+          />
         )}
       </main>
 

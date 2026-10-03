@@ -736,7 +736,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700">
               <Layers className="w-4 h-4 text-indigo-600" />
               <span>
-                Live Weekly Backend Report · Updated Automatically Every Week
+                Weekly Market Segment Intelligence · Updated Every Week
               </span>
             </div>
             <h2 className="text-lg font-bold text-slate-900">
@@ -747,9 +747,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               )
             </h2>
             <p className="text-xs text-slate-600">
-              Directly parsed from the weekly backend reports—highlighting each
-              market segment&apos;s key insights, business use case, and core
-              commercial question answered.
+              Both the market segments and the executive reports are updated
+              every week—highlighting each market segment&apos;s key insights,
+              business use case, and core commercial question answered.
             </p>
           </div>
 
@@ -845,7 +845,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         ) : (
           <div className="text-xs text-slate-500">
-            Weekly segment report is syncing from backend...
+            Loading weekly market segment report...
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Shield } from 'lucide-react';
 import { DemandAuraLogo } from '../components/DemandAuraLogo';
 import {
   formatEntityLabel,
@@ -419,7 +420,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             type="submit"
             disabled={isAuthActionPending}
             aria-busy={isAuthActionPending}
-            className="w-full py-2.5 px-4 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="w-full py-2.5 px-4 text-sm font-semibold text-white btn-aura-primary rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             {isAuthActionPending
               ? activeMode === 'signin'
@@ -435,7 +436,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-200" />
           <span className="flex-shrink mx-3 text-xs text-slate-400">
-            or authenticate with OAuth
+            or continue with
           </span>
           <div className="flex-grow border-t border-slate-200" />
         </div>
@@ -445,7 +446,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           type="button"
           onClick={handleGoogleAuth}
           disabled={isAuthActionPending}
-          className="w-full py-2.5 px-4 text-sm font-medium text-slate-800 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="w-full py-2.5 px-4 text-sm font-medium text-slate-800 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           {isAuthActionPending
             ? 'Connecting to Google...'
@@ -454,14 +455,26 @@ export const AuthView: React.FC<AuthViewProps> = ({
             : 'Sign Up with Google'}
         </button>
 
+        {/* Administrator Portal Shortcut */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() => onNavigate('admin')}
+            className="w-full py-2 px-3 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Administrator Access &amp; Login Monitor &rarr;</span>
+          </button>
+        </div>
+
         <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-600">
           {activeMode === 'signin' ? (
             <>
-              New to NexusDemand?{' '}
+              New to DemandAura?{' '}
               <button
                 type="button"
                 onClick={() => handleModeSwitch('signup')}
-                className="font-semibold text-slate-900 underline cursor-pointer"
+                className="font-semibold text-teal-700 underline cursor-pointer"
               >
                 Create an account
               </button>
@@ -472,7 +485,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleModeSwitch('signin')}
-                className="font-semibold text-slate-900 underline cursor-pointer"
+                className="font-semibold text-teal-700 underline cursor-pointer"
               >
                 Sign In
               </button>
@@ -491,9 +504,9 @@ interface ProfilePageProps {
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
   const {
     user,
-    uid,
     profile,
     userEmail,
+    isAdmin,
     predictions,
     saveProfile,
     logout,
@@ -558,18 +571,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
   const authProviderLabel =
     user.providerData[0]?.providerId === 'google.com'
-      ? 'Google OAuth 2.0'
+      ? 'Google Account'
       : 'Email & Password';
 
   return (
-    <div className="max-w-[1000px] mx-auto px-6 py-12 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+    <div className="max-w-[1000px] mx-auto px-6 py-10 space-y-8">
+      <div className="bg-aura-banner text-white rounded-2xl p-6 border border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="text-xs text-slate-500">
-            Account &amp; Default Model Preferences
+          <div className="text-xs text-cyan-300 font-medium">
+            Account &amp; Default Market Preferences
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
-            Analyst Profile
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Member Profile
           </h1>
         </div>
         <button
@@ -579,18 +592,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             await logout();
             onNavigate('home');
           }}
-          className="px-4 py-2 text-xs font-medium text-red-700 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors cursor-pointer self-start"
+          className="px-4 py-2 text-xs font-medium text-rose-200 bg-slate-900/80 border border-rose-500/40 rounded-xl hover:bg-rose-950/60 disabled:opacity-50 transition-colors cursor-pointer self-start"
         >
           {isAuthActionPending ? 'Signing Out...' : 'Sign Out of Workspace'}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div className="md:col-span-4 bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+        <div className="md:col-span-4 card-aura rounded-2xl p-6 space-y-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-teal-400 to-cyan-500" />
           <div className="space-y-1">
-            <div className="text-xs text-slate-500">Authenticated Identity</div>
-            <div className="text-base font-semibold text-slate-900">
-              {displayName || 'Analyst'}
+            <div className="text-xs text-slate-500">Signed-In Account</div>
+            <div className="text-base font-bold text-slate-900">
+              {displayName || 'Market Planner'}
             </div>
             <div className="text-xs text-slate-500 font-mono-tabular break-all">
               {userEmail || user.email}
@@ -599,25 +613,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
 
           <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
             <div>
-              Authenticated UID:{' '}
-              <span className="font-mono-tabular text-slate-800 break-all">
-                {uid}
-              </span>
-            </div>
-            <div>
-              Auth Provider:{' '}
+              Sign-In Method:{' '}
               <span className="font-medium text-slate-900">
                 {authProviderLabel}
               </span>
             </div>
             <div>
-              Persistence:{' '}
-              <span className="font-mono-tabular text-emerald-700">
-                browserLocalPersistence
+              Account Sync:{' '}
+              <span className="font-medium text-emerald-700">
+                Active Across Devices
               </span>
             </div>
             <div>
-              Saved Predictions:{' '}
+              Saved Market Analyses:{' '}
               <span className="font-mono-tabular font-semibold text-slate-900">
                 {predictions.length}
               </span>
@@ -629,12 +637,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
                 {formatEntityLabel(preferredCategory)}
               </span>
             </div>
+
+            {isAdmin && (
+              <div className="pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('admin')}
+                  className="w-full py-2 px-3 text-xs font-semibold text-white btn-aura-primary rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Shield className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Open Admin Command Center &rarr;</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="md:col-span-8 bg-white border border-slate-200 rounded-xl p-6 space-y-5">
-          <h2 className="text-base font-semibold text-slate-900">
-            Update Profile &amp; Model Defaults
+        <div className="md:col-span-8 card-aura rounded-2xl p-6 space-y-5 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-500 to-indigo-600" />
+          <h2 className="text-base font-bold text-slate-900">
+            Update Profile &amp; Default Market Preferences
           </h2>
 
           {savedNotice && (
@@ -755,7 +777,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate }) => {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 text-xs font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2.5 text-xs font-semibold text-white btn-aura-primary rounded-xl disabled:opacity-50 cursor-pointer"
             >
               {saving ? 'Saving Preferences...' : 'Save Profile Preferences'}
             </button>

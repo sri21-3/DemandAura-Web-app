@@ -249,6 +249,138 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "UserLoginLog": {
+      "title": "UserLoginLog",
+      "description": "Audit record of an authentication login or session initialization event.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user logging in.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the authenticated user.",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name at time of login.",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "loginMethod": {
+          "type": "string",
+          "description": "Authentication provider method.",
+          "enum": ["google", "password", "admin_quick"],
+          "maxLength": 32
+        },
+        "status": {
+          "type": "string",
+          "description": "Login attempt outcome.",
+          "enum": ["success", "failed"],
+          "maxLength": 32
+        },
+        "userAgent": {
+          "type": "string",
+          "description": "Client browser and platform agent summary.",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "platform": {
+          "type": "string",
+          "description": "Client operating system or platform.",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "locationTimezone": {
+          "type": "string",
+          "description": "Client resolved IANA timezone.",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "screenResolution": {
+          "type": "string",
+          "description": "Client screen resolution window dimensions.",
+          "minLength": 0,
+          "maxLength": 50
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the login was logged."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "loginMethod",
+        "status",
+        "userAgent",
+        "platform",
+        "locationTimezone",
+        "screenResolution",
+        "createdAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator record granting elevated access to monitor platform user logins and system controls.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the designated administrator.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "Administrator email address.",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Designated administrator role.",
+          "enum": ["super_admin", "admin", "analyst"],
+          "maxLength": 32
+        },
+        "assignedBy": {
+          "type": "string",
+          "description": "UID or identifier of the assigning authority.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the administrative privileges are currently active."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the admin record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server-generated timestamp when the admin record was last modified."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "role",
+        "assignedBy",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -269,6 +401,18 @@
         "$ref": "#/entities/ContactInquiry"
       },
       "description": "Collection storing Contact Us submissions owned by the submitting user."
+    },
+    "/userLogins/{loginId}": {
+      "schema": {
+        "$ref": "#/entities/UserLoginLog"
+      },
+      "description": "Audit collection of all user authentication login events monitored by administrators."
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminUser"
+      },
+      "description": "Role-based access registry of authorized platform administrators."
     }
   }
 }
