@@ -652,6 +652,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({
     };
   }, [loginLogs]);
 
+  // Non-admin users should never see admin screens or requests for admin
+  useEffect(() => {
+    if (user && !isAdmin) {
+      onNavigate('home');
+    }
+  }, [user, isAdmin, onNavigate]);
+
+  if (user && !isAdmin) {
+    return null;
+  }
+
   // If user is NOT logged in as admin: Show Dedicated Admin Login Screen
   if (!isAdmin) {
     return (
@@ -679,27 +690,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({
               <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
                 <span>{loginError}</span>
-              </div>
-            )}
-
-            {user && !isAdmin && (
-              <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-200 text-xs space-y-2">
-                <div className="font-semibold flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4 text-amber-400" />
-                  <span>Elevated Privileges Required</span>
-                </div>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  You are signed in as <strong className="text-white">{user.email}</strong>,
-                  which does not hold administrator privileges. Please sign in with
-                  the lead administrator account (<strong className="text-cyan-300">21sri97v@gmail.com</strong>).
-                </p>
-                <button
-                  type="button"
-                  onClick={() => logout()}
-                  className="mt-1 text-xs text-cyan-400 hover:underline cursor-pointer"
-                >
-                  Sign out to switch accounts &rarr;
-                </button>
               </div>
             )}
 

@@ -455,18 +455,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
             : 'Sign Up with Google'}
         </button>
 
-        {/* Administrator Portal Shortcut */}
-        <div className="pt-1">
-          <button
-            type="button"
-            onClick={() => onNavigate('admin')}
-            className="w-full py-2 px-3 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/80 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Shield className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Administrator Access &amp; Login Monitor &rarr;</span>
-          </button>
-        </div>
-
         <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-600">
           {activeMode === 'signin' ? (
             <>
