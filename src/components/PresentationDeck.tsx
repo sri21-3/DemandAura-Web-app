@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, Presentation } from 'lucide-react';
-import { DEVELOPER_INFO } from '../config/api';
 import { DemandAuraLogo } from './DemandAuraLogo';
 
 interface SlideItem {
@@ -31,8 +30,9 @@ const PRESENTATION_SLIDES: SlideItem[] = [
           '14 economies across North America, Europe, Asia-Pacific, Latin America, and Middle East & Africa × 3 consumer lifestyle verticals.',
       },
       {
-        heading: 'Developer & Creator',
-        detail: `${DEVELOPER_INFO.name} (${DEVELOPER_INFO.githubDisplay} · ${DEVELOPER_INFO.linkedinDisplay} · ${DEVELOPER_INFO.email})`,
+        heading: 'Architecture & Engine',
+        detail:
+          'Production-grade Machine Learning pipeline uniting Google Trends™, GDELT news tone, and World Bank macroeconomic signals.',
       },
     ],
     footerNote:
@@ -269,7 +269,8 @@ const PRESENTATION_SLIDES: SlideItem[] = [
           'Project the next 4 weeks of search interest (0–100 scale) to pre-position inventory and launch campaigns right before the peak demand week.',
       },
     ],
-    footerNote: `Slide 10 / 10 · Thank You · Designed & Developed by ${DEVELOPER_INFO.name}`,
+    footerNote:
+      'Slide 10 / 10 · Thank You · DemandAura Market Foresight Platform',
   },
 ];
 

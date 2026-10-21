@@ -111,7 +111,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   const [activeTab, setActiveTab] = useState<AdminTab>('logins');
 
   // Admin login credentials state
-  const [loginEmail, setLoginEmail] = useState('21sri97v@gmail.com');
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -704,7 +704,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
-                    placeholder="21sri97v@gmail.com"
+                    placeholder="admin@demandaura.ai"
                     className="w-full bg-[#070E24] border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                   />
                   <Shield className="w-4 h-4 text-slate-500 absolute right-3.5 top-3" />
@@ -756,7 +756,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
                 className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-indigo-600/30 hover:bg-indigo-600/40 border border-indigo-500/40 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-cyan-300" />
-                <span>One-Click Lead Admin Access (21sri97v@gmail.com)</span>
+                <span>One-Click Lead Admin Access</span>
               </button>
 
               <button
@@ -1742,10 +1742,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({
               <div>
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <Mail className="w-4 h-4 text-cyan-400" />
-                  <span>Enterprise Inquiry & Support Desk</span>
+                  <span>Contact &amp; Technical Inquiries Desk</span>
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Review and resolve enterprise integration inquiries submitted via the Contact page.
+                  Review and resolve technical inquiries and platform requests submitted via the Contact page.
                 </p>
               </div>
 

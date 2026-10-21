@@ -276,7 +276,7 @@ service cloud.firestore {
             'updatedAt'
           ])
         );
-      allow delete: if false;
+      allow delete: if (isOwner(userId) || isAdmin()) && isValidId(userId);
 
       // User Prediction / Query History Subcollection
       match /predictions/{predictionId} {

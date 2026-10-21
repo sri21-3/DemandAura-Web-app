@@ -12,7 +12,10 @@ import categoryFitnessWearables from '../assets/images/category_fitness_wearable
 import categoryNutritionDiets from '../assets/images/category_nutrition_diets_1790750728244.jpg';
 import heroImage from '../assets/images/hero_market_foresight_1790705585148.jpg';
 import { DemandAuraLogo } from '../components/DemandAuraLogo';
-import { VALID_CATEGORIES, VALID_COUNTRIES } from '../config/api';
+import {
+  VALID_CATEGORIES,
+  VALID_COUNTRIES,
+} from '../config/api';
 import { AppPage, CanonicalCategory, HealthResponse } from '../types/models';
 
 interface HomePageProps {
@@ -60,8 +63,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div className="max-w-[1400px] mx-auto px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex flex-wrap items-center gap-2 text-xs text-cyan-300/90 font-medium tracking-wide">
-              <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-              <span>Demand Intelligence &amp; Market Foresight Platform</span>
+              <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] uppercase tracking-wider font-semibold">
+                Predictive Demand Intelligence
+              </span>
               <span aria-hidden="true" className="text-slate-600">
                 ·
               </span>

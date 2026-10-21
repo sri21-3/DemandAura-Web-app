@@ -62,13 +62,13 @@ export interface CategoryKeywordBatch {
 }
 
 export const DEVELOPER_INFO = {
-  name: 'CH Srivatsava',
-  role: 'Platform Developer & Creator',
-  github: 'https://github.com/sri21-3/',
-  githubDisplay: 'github.com/sri21-3',
-  linkedin: 'https://www.linkedin.com/in/21srivatsava',
-  linkedinDisplay: 'linkedin.com/in/21srivatsava',
-  email: 'srisrivatsava120@gmail.com',
+  name: 'DemandAura Team',
+  role: 'Platform Engineering & Research',
+  github: 'https://github.com',
+  githubDisplay: 'github.com',
+  linkedin: 'https://www.linkedin.com',
+  linkedinDisplay: 'linkedin.com',
+  email: 'support@demandaura.com',
 } as const;
 
 export const VALID_CATEGORIES: {

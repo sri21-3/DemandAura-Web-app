@@ -181,7 +181,9 @@ export type AppPage =
   | 'signin'
   | 'signup'
   | 'profile'
-  | 'admin';
+  | 'admin'
+  | 'privacy'
+  | 'terms';
 
 export type MlErrorCategory =
   | 'validation_error'

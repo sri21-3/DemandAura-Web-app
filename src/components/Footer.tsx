@@ -1,5 +1,4 @@
 import React from 'react';
-import { DEVELOPER_INFO } from '../config/api';
 import { AppPage } from '../types/models';
 import { DemandAuraLogo } from './DemandAuraLogo';
 
@@ -11,8 +10,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <footer className="bg-[#070E24] text-slate-300 border-t border-slate-800/80 mt-20">
       <div className="max-w-[1400px] mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800/80">
-          <div className="md:col-span-1 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 pb-10 border-b border-slate-800/80">
+          <div className="lg:col-span-1 space-y-3">
             <button
               type="button"
               onClick={() => onNavigate('home')}
@@ -121,47 +120,74 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
           <div className="space-y-2.5">
             <div className="text-xs font-semibold text-white">
-              Developer &amp; Creator
+              Legal &amp; Compliance
+            </div>
+            <ul className="space-y-2 text-xs text-slate-400">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('privacy')}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Privacy Policy</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('terms')}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Terms of Service</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('privacy')}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
+                >
+                  Google User Data Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('privacy')}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer"
+                >
+                  Data Deletion Instructions
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="text-xs font-semibold text-white">
+              Platform &amp; Support
             </div>
             <div className="text-xs text-slate-400 space-y-1.5 leading-relaxed">
               <div className="font-semibold text-white">
-                {DEVELOPER_INFO.name}
+                DemandAura Operations
               </div>
               <div>
                 <a
-                  href={`mailto:${DEVELOPER_INFO.email}`}
+                  href="mailto:support@demandaura.com"
                   className="text-cyan-300 hover:underline"
                 >
-                  {DEVELOPER_INFO.email}
+                  support@demandaura.com
                 </a>
               </div>
-              <div className="flex items-center gap-3 pt-0.5">
-                <a
-                  href={DEVELOPER_INFO.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-300 hover:text-cyan-300 underline font-medium"
-                >
-                  GitHub
-                </a>
-                <span aria-hidden="true">·</span>
-                <a
-                  href={DEVELOPER_INFO.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-300 hover:text-cyan-300 underline font-medium"
-                >
-                  LinkedIn
-                </a>
+              <div className="text-slate-400 pt-0.5">
+                Predictive Demand Intelligence Engine
               </div>
             </div>
           </div>
         </div>
 
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <div className="pt-6 pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
-            © {new Date().getFullYear()} DemandAura · Designed &amp; Developed
-            by <strong className="text-white">{DEVELOPER_INFO.name}</strong>
+            © {new Date().getFullYear()} DemandAura. All rights reserved.
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span>14 Global Markets</span>
@@ -170,6 +196,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <span aria-hidden="true">·</span>
             <span>63 Tracked Consumer Search Keywords</span>
           </div>
+        </div>
+
+        {/* Fair Use & Trademark Disclaimer */}
+        <div className="pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 leading-relaxed">
+          <p>
+            <strong>Research Fair Use &amp; Trademark Notice:</strong> DemandAura is an independent machine learning demand intelligence platform. Search interest metrics are derived from normalized public Google Trends™ signals alongside macroeconomic and media datasets. Google, Google Trends, Firebase, and related marks are registered trademarks of Google LLC. DemandAura is not affiliated with, sponsored by, or endorsed by Google LLC or Alphabet Inc.
+          </p>
         </div>
       </div>
     </footer>

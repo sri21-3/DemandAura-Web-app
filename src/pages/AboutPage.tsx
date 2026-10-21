@@ -2,7 +2,6 @@ import React from 'react';
 import aboutImage from '../assets/images/about_pipeline_architecture_1790705597994.jpg';
 import { DemandAuraLogo } from '../components/DemandAuraLogo';
 import {
-  DEVELOPER_INFO,
   FEATURE_DESCRIPTIONS,
   VALID_CATEGORIES,
 } from '../config/api';
@@ -19,11 +18,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
       <section className="bg-aura-hero text-white border-b border-slate-800">
         <div className="max-w-[1400px] mx-auto px-6 py-14 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2.5 text-xs text-cyan-300 font-medium">
+            <div className="inline-flex flex-wrap items-center gap-2.5 text-xs text-cyan-300 font-medium">
               <DemandAuraLogo size={28} />
-              <span>
-                DemandAura · Platform Overview · Keyword Coverage · Decision Guide
+              <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] uppercase tracking-wider font-semibold">
+                Predictive Demand Intelligence
               </span>
+              <span aria-hidden="true" className="text-slate-500">·</span>
+              <span>14 Countries · 3 Consumer Sectors</span>
             </div>
             <h1
               className="text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight"
@@ -33,12 +34,11 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               Decisions
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              DemandAura is a Demand Intelligence &amp; Market Foresight Platform
-              designed for brand leaders, merchandise planners, and international
-              growth teams. By comparing real consumer search behavior against
-              global news coverage and local economic conditions across 14
-              countries and 3 consumer categories, the platform helps you invest
-              ahead of real demand—and avoid paying for passing media hype.
+              DemandAura is an end-to-end Machine Learning &amp; Consumer Demand Intelligence
+              Platform. By analyzing authentic multi-year consumer search behavior (Google Trends™) alongside global news coverage (GDELT)
+              and macroeconomic indicators (World Bank) across 14 countries and 3 consumer categories, the platform
+              demonstrates how predictive machine learning can detect authentic market momentum, filter out transient media hype,
+              and forecast 4-week demand interest.
             </p>
             <div className="pt-2 flex flex-wrap gap-3">
               <button
@@ -330,14 +330,14 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* Developer Attribution Card */}
+      {/* Platform Exploration CTA */}
       <section className="bg-aura-banner text-white rounded-2xl p-8 border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
           <div className="text-xs text-cyan-300 font-medium">
-            Platform Creator &amp; Developer
+            Demand Intelligence Engine
           </div>
           <h2 className="text-2xl font-bold text-white">
-            Designed &amp; Developed by {DEVELOPER_INFO.name}
+            Ready to explore genuine consumer trends?
           </h2>
           <p className="text-sm text-slate-300 leading-relaxed">
             Built to empower commercial teams with clear, actionable consumer
@@ -347,28 +347,20 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <a
-            href={DEVELOPER_INFO.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2.5 text-xs font-semibold btn-aura-primary rounded-xl transition-colors whitespace-nowrap"
+          <button
+            type="button"
+            onClick={() => onNavigate('dashboard')}
+            className="px-5 py-2.5 text-xs font-semibold btn-aura-primary rounded-xl transition-colors whitespace-nowrap cursor-pointer"
           >
-            GitHub ({DEVELOPER_INFO.githubDisplay})
-          </a>
-          <a
-            href={DEVELOPER_INFO.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2.5 text-xs font-medium text-white bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors whitespace-nowrap"
+            Launch Intelligence Dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate('contact')}
+            className="px-5 py-2.5 text-xs font-medium text-white bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
           >
-            LinkedIn ({DEVELOPER_INFO.linkedinDisplay})
-          </a>
-          <a
-            href={`mailto:${DEVELOPER_INFO.email}`}
-            className="px-4 py-2.5 text-xs font-medium text-white bg-slate-900/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-colors whitespace-nowrap"
-          >
-            {DEVELOPER_INFO.email}
-          </a>
+            Contact Platform Desk
+          </button>
         </div>
       </section>
       </div>

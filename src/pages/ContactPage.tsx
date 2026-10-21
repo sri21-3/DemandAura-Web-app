@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  DEVELOPER_INFO,
   VALID_CATEGORIES,
   VALID_COUNTRIES,
 } from '../config/api';
@@ -45,7 +44,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     try {
       await submitContactInquiry({
         senderName: senderName || user.displayName || 'Market Planner',
-        organization: organization || 'Enterprise Team',
+        organization: organization || 'Hiring Team / Research Group',
         topic,
         message,
       });
@@ -66,14 +65,13 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
     <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-10">
       <div className="bg-aura-banner text-white rounded-2xl p-6 lg:p-8 border border-slate-800 shadow-lg space-y-2">
         <div className="text-xs text-cyan-300 font-medium">
-          Direct Developer Contact &amp; Market Foresight Support
+          Platform Inquiries &amp; Market Foresight Support
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          Contact DemandAura &amp; {DEVELOPER_INFO.name}
+          Contact DemandAura Support
         </h1>
         <p className="text-sm text-slate-300 max-w-2xl">
-          Connect directly with developer <strong className="text-white">{DEVELOPER_INFO.name}</strong>{' '}
-          or submit a market intelligence inquiry below.
+          Get in touch with the DemandAura operations team or submit a market intelligence inquiry below.
         </p>
       </div>
 
@@ -148,7 +146,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   maxLength={120}
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value)}
-                  placeholder="Global Retail Group"
+                  placeholder="e.g. Hiring Team / Company / Research Group"
                   className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg"
                 />
               </div>
@@ -171,7 +169,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
                   Custom Market &amp; Country Coverage
                 </option>
                 <option value="Enterprise Licensing">
-                  Enterprise Team Access &amp; Licensing
+                  Enterprise Licensing &amp; Commercial Deployment
                 </option>
                 <option value="Model Calibration">
                   Category Insights &amp; Advisory Walkthrough
@@ -212,52 +210,45 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onNavigate }) => {
           </form>
         </div>
 
-        {/* Right Column: Developer Profile, Coverage Summary & Previous Inquiries */}
+        {/* Right Column: Platform Support Desk, Coverage Summary & Previous Inquiries */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Developer Direct Contact Card */}
+          {/* Platform Support Desk Card */}
           <div className="bg-aura-banner text-white rounded-2xl p-6 border border-slate-800 shadow-lg space-y-4">
             <div className="space-y-1">
               <div className="text-xs text-slate-400">
-                Developer &amp; Platform Creator
+                Support &amp; Inquiries Desk
               </div>
               <h3 className="text-lg font-semibold text-white">
-                {DEVELOPER_INFO.name}
+                DemandAura Operations
               </h3>
             </div>
 
             <div className="space-y-2.5 text-xs text-slate-300">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">Personal Email</span>
+                <span className="text-slate-400">Support Desk</span>
                 <a
-                  href={`mailto:${DEVELOPER_INFO.email}`}
+                  href="mailto:support@demandaura.com"
                   className="text-white hover:underline font-mono-tabular"
                 >
-                  {DEVELOPER_INFO.email}
+                  support@demandaura.com
                 </a>
               </div>
 
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">LinkedIn</span>
+                <span className="text-slate-400">Commercial Inquiries</span>
                 <a
-                  href={DEVELOPER_INFO.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="mailto:inquiries@demandaura.com"
                   className="text-white hover:underline font-mono-tabular"
                 >
-                  {DEVELOPER_INFO.linkedinDisplay}
+                  inquiries@demandaura.com
                 </a>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">GitHub</span>
-                <a
-                  href={DEVELOPER_INFO.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white hover:underline font-mono-tabular"
-                >
-                  {DEVELOPER_INFO.githubDisplay}
-                </a>
+                <span className="text-slate-400">Response SLA</span>
+                <span className="text-teal-400 font-medium">
+                  Within 1–2 business days
+                </span>
               </div>
             </div>
           </div>

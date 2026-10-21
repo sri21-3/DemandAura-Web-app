@@ -18,7 +18,9 @@ import { DivergencePage } from './pages/DivergencePage';
 import { ForecastPage } from './pages/ForecastPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { HomePage } from './pages/HomePage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { SegmentationPage } from './pages/SegmentationPage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { nexusDemandApi } from './services/nexusDemandApi';
 import {
   AppPage,
@@ -35,8 +37,58 @@ const WORKSPACE_PAGES = new Set<AppPage>([
   'history',
 ]);
 
+function parsePageFromLocation(): AppPage {
+  try {
+    const pathname = window.location.pathname
+      .replace(/^\/+|\/+$/g, '')
+      .toLowerCase();
+    const searchParams = new URLSearchParams(window.location.search);
+    const pageParam = (searchParams.get('page') || '').toLowerCase();
+    const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+
+    const candidate = pageParam || hash || pathname;
+
+    switch (candidate) {
+      case 'privacy':
+      case 'privacy-policy':
+        return 'privacy';
+      case 'terms':
+      case 'terms-of-service':
+        return 'terms';
+      case 'about':
+        return 'about';
+      case 'contact':
+        return 'contact';
+      case 'dashboard':
+        return 'dashboard';
+      case 'divergence':
+        return 'divergence';
+      case 'forecast':
+        return 'forecast';
+      case 'segmentation':
+        return 'segmentation';
+      case 'history':
+        return 'history';
+      case 'signin':
+      case 'login':
+        return 'signin';
+      case 'signup':
+      case 'register':
+        return 'signup';
+      case 'profile':
+        return 'profile';
+      case 'admin':
+        return 'admin';
+      default:
+        return 'home';
+    }
+  } catch {
+    return 'home';
+  }
+}
+
 function AppShell() {
-  const [currentPage, setCurrentPage] = useState<AppPage>('home');
+  const [currentPage, setCurrentPage] = useState<AppPage>(parsePageFromLocation);
   const [systemAnnouncement, setSystemAnnouncement] = useState<string | null>(
     null
   );
@@ -119,10 +171,26 @@ function AppShell() {
     loadClusterReports();
   }, [checkBackendHealth, loadClusterTables, loadClusterReports]);
 
-  const handleNavigate = (page: AppPage) => {
+  const handleNavigate = useCallback((page: AppPage) => {
     setCurrentPage(page);
+    try {
+      const targetPath = page === 'home' ? '/' : `/${page}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ page }, '', targetPath);
+      }
+    } catch {
+      // ignore fallback
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPage(parsePageFromLocation());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const isWorkspaceRoute = WORKSPACE_PAGES.has(currentPage);
 
@@ -261,6 +329,14 @@ function AppShell() {
             systemAnnouncement={systemAnnouncement}
             onUpdateSystemAnnouncement={setSystemAnnouncement}
           />
+        )}
+
+        {currentPage === 'privacy' && (
+          <PrivacyPolicyPage onNavigate={handleNavigate} />
+        )}
+
+        {currentPage === 'terms' && (
+          <TermsOfServicePage onNavigate={handleNavigate} />
         )}
       </main>
 
