@@ -18,6 +18,8 @@ import {
   SegmentationRecord,
   TableDataResponse,
   WeeklyForecastPoint,
+  WeeklyHistoricalPoint,
+  ForecastLoadedFeatures,
 } from '../types/models';
 
 const CANONICAL_COUNTRY_SET = new Set<string>(
@@ -253,11 +255,40 @@ function validateForecastResponse(
     }
   );
 
+  let historicalPoints: WeeklyHistoricalPoint[] = [];
+  if (Array.isArray(raw.historical_points)) {
+    historicalPoints = raw.historical_points.map((pt: unknown, idx: number) => {
+      if (
+        !isRecord(pt) ||
+        typeof pt.week_date !== 'string' ||
+        typeof pt.search_interest !== 'number' ||
+        !Number.isFinite(pt.search_interest)
+      ) {
+        throw new MlPipelineError(
+          'invalid_response',
+          `Invalid historical point at index ${idx}: expected week_date (string) and search_interest (number).`,
+          endpoint
+        );
+      }
+      return {
+        week_date: pt.week_date,
+        search_interest: pt.search_interest,
+      };
+    });
+  }
+
+  let loadedFeatures: ForecastLoadedFeatures | undefined;
+  if (isRecord(raw.loaded_features)) {
+    loadedFeatures = raw.loaded_features as ForecastLoadedFeatures;
+  }
+
   return {
     country_name: raw.country_name,
     category: raw.category,
     target_variable: raw.target_variable,
+    historical_points: historicalPoints,
     forecast_points: points,
+    loaded_features: loadedFeatures,
     status: typeof raw.status === 'string' ? raw.status : 'success',
   };
 }

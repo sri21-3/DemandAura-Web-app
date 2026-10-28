@@ -145,28 +145,28 @@ const PRESENTATION_SLIDES: SlideItem[] = [
   {
     number: '06',
     section: 'Predictive Model 02 · LightGBM Regressor',
-    title: '4-Week Consumer Search Interest Forecaster (0–100 Scale)',
+    title: 'Dual 4-Week Horizon: Historical Ground Truth + Forward Demand Forecaster',
     subtitle:
-      'Projects week-by-week consumer search interest across the upcoming 4 weeks for any country and lifestyle category.',
+      'Combines 4 weeks of verified historical search interest actuals with a 4-week recursive forward outlook (0–100 scale) for any country and lifestyle category.',
     bullets: [
       {
         heading: 'Model Architecture & Feature Pipeline (16 Ordered Features)',
         detail:
-          'Recursive multi-step LGBMRegressor (n_estimators=1000, learning_rate=0.02, num_leaves=31) using native categoricals, lagged search interest (t-1, t-2, t-4), velocity/acceleration lags, 4W rolling stats, macro indicators, and sin/cos seasonality.',
+          'Recursive multi-step LGBMRegressor (n_estimators=1000, learning_rate=0.02, num_leaves=31) conditioned on 4-week historical actuals, lagged search interest (t-1, t-2, t-4), velocity/acceleration lags, 4W rolling statistics, macro indicators, and sin/cos seasonality.',
       },
       {
-        heading: 'Validation Accuracy',
+        heading: '8-Week Continuous Horizon (4W Actuals → 4W Predictions)',
         detail:
-          'Train R² = 0.97 (RMSE = 3.15) · Test R² = 0.88 (RMSE = 6.74) on 0–100 search popularity scale.',
+          'API returns verified 4-week historical data alongside the 4-week forward trajectory, allowing immediate comparison of baseline momentum against projected peak weeks.',
       },
       {
         heading: 'Commercial Decision Rule',
         detail:
-          'Identify the projected Peak Week 3 to 4 weeks early to pre-position regional fulfillment stock and time promotional product launches.',
+          'Compare the 4-week historical baseline with projected peak weeks 3 to 4 weeks early to pre-position regional fulfillment stock and time promotional product launches.',
       },
     ],
     footerNote:
-      'Slide 06 / 10 · API Endpoint: POST /forecast/search-interest · 4-Week Forward Demand Outlook',
+      'Slide 06 / 10 · API Endpoint: POST /forecast/search-interest · 4W Actuals + 4W Forward Outlook',
   },
   {
     number: '07',

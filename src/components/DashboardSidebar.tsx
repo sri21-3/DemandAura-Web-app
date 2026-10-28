@@ -21,16 +21,9 @@ const SIDEBAR_ITEMS: {
   icon: React.FC<{ className?: string }>;
 }[] = [
   {
-    id: 'divergence',
-    label: 'Divergence',
-    subtitle: 'Demand vs. Hype (-1 to +1)',
-    accentColor: 'text-emerald-400',
-    icon: Activity,
-  },
-  {
     id: 'forecast',
-    label: 'Forecast',
-    subtitle: '4-Week Search Outlook',
+    label: 'Demand & Forecast',
+    subtitle: 'Divergence & 8W Outlook',
     accentColor: 'text-cyan-400',
     icon: TrendingUp,
   },
@@ -101,7 +94,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           </div>
           {SIDEBAR_ITEMS.map((item) => {
             const Icon = item.icon;
-            const active = currentPage === item.id;
+            const active =
+              item.id === 'forecast'
+                ? currentPage === 'forecast' || currentPage === 'divergence'
+                : currentPage === item.id;
             return (
               <button
                 key={item.id}
@@ -168,7 +164,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             Dashboard
           </button>
           {SIDEBAR_ITEMS.map((item) => {
-            const active = currentPage === item.id;
+            const active =
+              item.id === 'forecast'
+                ? currentPage === 'forecast' || currentPage === 'divergence'
+                : currentPage === item.id;
             return (
               <button
                 key={item.id}

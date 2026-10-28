@@ -40,22 +40,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               demonstrates how predictive machine learning can detect authentic market momentum, filter out transient media hype,
               and forecast 4-week demand interest.
             </p>
-            <div className="pt-2 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => onNavigate('divergence')}
-                className="px-5 py-2.5 text-xs font-semibold text-white btn-aura-primary rounded-xl cursor-pointer"
-              >
-                Check Demand vs. Hype Score
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('forecast')}
-                className="px-5 py-2.5 text-xs font-medium text-cyan-100 bg-slate-900/70 border border-cyan-400/30 rounded-xl hover:bg-slate-800 cursor-pointer"
-              >
-                Open 4-Week Forecaster
-              </button>
-            </div>
           </div>
 
           <div className="lg:col-span-5">

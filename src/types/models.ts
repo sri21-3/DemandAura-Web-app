@@ -51,16 +51,43 @@ export interface ForecastRequest {
   category: CanonicalCategory;
 }
 
+export interface WeeklyHistoricalPoint {
+  week_date: string;
+  search_interest: number;
+}
+
 export interface WeeklyForecastPoint {
   week_date: string;
   predicted_search_interest: number;
+}
+
+export interface ForecastLoadedFeatures {
+  country_name?: string;
+  category?: string;
+  demand_to_hype_ratio?: number;
+  inflation_rate?: number;
+  gdp_per_capita?: number;
+  holiday_count?: number;
+  search_interest_lag_1?: number;
+  search_interest_lag_2?: number;
+  search_interest_lag_4?: number;
+  search_velocity_lag?: number;
+  search_acceleration_lag?: number;
+  search_interest_roll_mean_4w?: number;
+  search_interest_roll_std_4w?: number;
+  media_volume_roll_mean_4w?: number;
+  sin_week?: number;
+  cos_week?: number;
+  [key: string]: unknown;
 }
 
 export interface ForecastResponse {
   country_name: string;
   category: string;
   target_variable: string;
+  historical_points?: WeeklyHistoricalPoint[];
   forecast_points: WeeklyForecastPoint[];
+  loaded_features?: ForecastLoadedFeatures;
   status: string;
 }
 

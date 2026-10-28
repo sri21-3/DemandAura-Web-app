@@ -271,7 +271,14 @@ function AppShell() {
                   />
                 )}
 
-                {currentPage === 'forecast' && <ForecastPage />}
+                {currentPage === 'forecast' && (
+                  <ForecastPage
+                    overallClusters={overallClusters}
+                    fourWeekClusters={fourWeekClusters}
+                    overallReport={overallReport}
+                    fourWeekReport={fourWeekReport}
+                  />
+                )}
 
                 {currentPage === 'segmentation' && (
                   <SegmentationPage

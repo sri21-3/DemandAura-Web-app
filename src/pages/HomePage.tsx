@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Globe,
   Layers,
-  Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import categoryFashionBeauty from '../assets/images/category_fashion_beauty_1790750702602.jpg';
@@ -110,20 +109,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               >
                 <span>Open Intelligence Dashboard</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('divergence')}
-                className="px-5 py-3 text-sm font-medium text-cyan-100 bg-slate-900/70 border border-cyan-500/30 rounded-xl hover:bg-slate-800/90 hover:border-cyan-400/50 transition-all cursor-pointer whitespace-nowrap"
-              >
-                Check Demand vs. Hype Score
-              </button>
-              <button
-                type="button"
-                onClick={() => onNavigate('forecast')}
-                className="px-5 py-3 text-sm font-medium text-indigo-100 bg-slate-900/70 border border-indigo-500/30 rounded-xl hover:bg-slate-800/90 hover:border-indigo-400/50 transition-all cursor-pointer whitespace-nowrap"
-              >
-                View 4-Week Demand Forecast
               </button>
             </div>
           </div>
@@ -264,7 +249,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     </div>
                   </div>
 
-                  <div className="p-6 space-y-4">
+                  <div className="p-6 pb-7 space-y-4">
                     <p className="text-xs text-slate-600 leading-relaxed">
                       {cat.description}
                     </p>
@@ -292,257 +277,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     </div>
                   </div>
                 </div>
-
-                <div className="px-6 pb-6 pt-2 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('divergence')}
-                    className="flex-1 py-2.5 px-3 text-xs font-semibold btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
-                  >
-                    Check Demand vs. Hype
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('forecast')}
-                    className="flex-1 py-2.5 px-3 text-xs font-semibold text-slate-700 bg-slate-100/80 border border-slate-200 rounded-xl hover:bg-slate-200/70 transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    4-Week Forecast
-                  </button>
-                </div>
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* Core Intelligence Capabilities & Business Benefits */}
-      <section className="max-w-[1400px] mx-auto px-6 space-y-8">
-        <div className="max-w-3xl space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-indigo-700">
-            Platform Capabilities · Built for Commercial Decisions
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Four Market Foresight Tools &amp; How They Help Your Business
-          </h2>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Each tool answers a specific commercial question—helping you decide
-            where to invest marketing budget, when to stock inventory, and which
-            international markets to prioritize next.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Capability 1: Divergence Score */}
-          <div className="card-aura rounded-2xl p-7 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500" />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-teal-700">
-                  01 · Opportunity vs. Media Saturation Detector
-                </div>
-                <Activity className="w-5 h-5 text-teal-600" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Demand vs. Hype Divergence Score (-1.00 to +1.00)
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Evaluates the real-time balance between organic consumer search
-                interest and news/media coverage on a clear{' '}
-                <strong>-1.00 to +1.00</strong> scale for any supported country
-                and category.
-              </p>
-
-              <div className="bg-gradient-to-br from-teal-50/70 to-emerald-50/40 border border-teal-200/70 rounded-xl p-4 space-y-3 text-xs">
-                <div className="font-semibold text-slate-900">
-                  Key benefits for your team:
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-emerald-800">
-                    Uncover Underserved Demand (+0.01 to +1.00):
-                  </strong>{' '}
-                  A positive score means shoppers are actively searching for
-                  products while media coverage and competitor noise remain low.
-                  Scale search campaigns, launch new products, and capture
-                  buyers at lower acquisition costs.
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-amber-800">
-                    Filter Out Passing Media Hype (-1.00 to -0.01):
-                  </strong>{' '}
-                  A negative score warns you that press headlines and industry
-                  buzz are louder than actual buyer intent—helping you avoid
-                  wasted awareness spend and warehouse overstocking.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('divergence')}
-              className="w-full py-3 px-4 text-xs font-semibold btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
-            >
-              Check Demand vs. Hype Score
-            </button>
-          </div>
-
-          {/* Capability 2: 4-Week Search Interest Forecast */}
-          <div className="card-aura rounded-2xl p-7 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600" />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-sky-700">
-                  02 · 4-Week Forward Demand Outlook (14 Countries × 3
-                  Categories)
-                </div>
-                <TrendingUp className="w-5 h-5 text-sky-600" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                4-Week Consumer Search Interest Forecast (0–100 Scale)
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Projects week-by-week consumer search interest over the{' '}
-                <strong>next 4 weeks</strong> across all{' '}
-                <strong>3 categories</strong> and <strong>14 countries</strong>,
-                accounting for recent momentum, seasonal cycles, public
-                holidays, and local economic conditions.
-              </p>
-
-              <div className="bg-gradient-to-br from-sky-50/70 to-blue-50/40 border border-sky-200/70 rounded-xl p-4 space-y-3 text-xs">
-                <div className="font-semibold text-slate-900">
-                  Key benefits for your team:
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-sky-900">
-                    Proactive Inventory &amp; Supply Chain Planning:
-                  </strong>{' '}
-                  Spot a projected demand surge 3 to 4 weeks early so your
-                  operations team can move stock into regional fulfillment
-                  centers before stockouts happen.
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-sky-900">
-                    Smarter Campaign &amp; Launch Timing:
-                  </strong>{' '}
-                  Schedule product drops, influencer partnerships, and
-                  promotional budgets to hit the exact week shopper interest is
-                  projected to peak.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('forecast')}
-              className="w-full py-3 px-4 text-xs font-semibold btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
-            >
-              Forecast Next 4 Weeks of Search Interest
-            </button>
-          </div>
-
-          {/* Capability 3: Long-Term Market Segmentation */}
-          <div className="card-aura rounded-2xl p-7 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-600" />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-indigo-700">
-                  03 · Long-Term Market Structure (Multi-Year Historical Data)
-                </div>
-                <Layers className="w-5 h-5 text-indigo-600" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Long-Term Strategic Market Segmentation
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Continuously groups all 42 country–category markets into
-                distinct strategic profiles based on multi-year consumer search
-                interest, media presence, public sentiment, and local purchasing
-                power—automatically refreshing as weekly data expands.
-              </p>
-
-              <div className="bg-gradient-to-br from-indigo-50/70 to-violet-50/40 border border-indigo-200/70 rounded-xl p-4 space-y-3 text-xs">
-                <div className="font-semibold text-slate-900">
-                  Key benefits for your team:
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-indigo-950">
-                    Confident International Expansion &amp; Pricing:
-                  </strong>{' '}
-                  Understand the enduring character of a market before committing
-                  capital—separating established, high-purchasing-power growth
-                  markets suited for premium product lines from emerging regions
-                  that reward accessible entry pricing.
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-indigo-950">
-                    Replicate Winning Playbooks Across Similar Markets:
-                  </strong>{' '}
-                  When two countries share the same long-term market segment,
-                  you can adapt proven merchandising and channel strategies from
-                  one region to the other.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('segmentation')}
-              className="w-full py-3 px-4 text-xs font-semibold btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
-            >
-              Explore Long-Term Market Segments
-            </button>
-          </div>
-
-          {/* Capability 4: 4-Week Recent Market Segmentation */}
-          <div className="card-aura rounded-2xl p-7 flex flex-col justify-between space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500" />
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold text-purple-700">
-                  04 · Short-Term Momentum Radar (Latest 4-Week Window)
-                </div>
-                <Sparkles className="w-5 h-5 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                4-Week Rolling Momentum Segmentation
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Segments the same 42 markets using the{' '}
-                <strong>most recent 4 weeks of data</strong>, dynamically
-                updating every week to surface newly emerging demand breakouts,
-                fast-growing competitive markets, or cooling categories.
-              </p>
-
-              <div className="bg-gradient-to-br from-purple-50/70 to-fuchsia-50/40 border border-purple-200/70 rounded-xl p-4 space-y-3 text-xs">
-                <div className="font-semibold text-slate-900">
-                  Key benefits for your team:
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-purple-950">
-                    Spot Market Shifts Weeks Before Competitors:
-                  </strong>{' '}
-                  By comparing a market&apos;s long-term segment against its
-                  latest 4-week momentum profile, you immediately see when a
-                  normally quiet region is experiencing a sudden surge in
-                  shopper interest—or when a mature market is starting to cool.
-                </div>
-                <div className="text-slate-700 leading-relaxed">
-                  <strong className="text-purple-950">
-                    Agile Monthly Budget Reallocation:
-                  </strong>{' '}
-                  Direct performance marketing and promotional budgets toward
-                  the specific countries accelerating right now.
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('segmentation')}
-              className="w-full py-3 px-4 text-xs font-semibold btn-aura-primary rounded-xl cursor-pointer whitespace-nowrap"
-            >
-              Explore 4-Week Momentum Segments
-            </button>
-          </div>
         </div>
       </section>
 
